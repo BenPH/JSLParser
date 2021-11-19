@@ -1,0 +1,12 @@
+{
+  "name": "jsl_parser",
+  "version": "0.1.0",
+  "description": "Parsing the JMP scripting language",
+  "main": "index.js",
+  "devDependencies": {
+    "@types/node": "^16.11.9",
+    "typescript": "^4.5.2"
+  },
+  "author": "Ben Peachey Higdon",
+  "license": "MIT"
+}
