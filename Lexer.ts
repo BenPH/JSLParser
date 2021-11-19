@@ -70,8 +70,11 @@ export class Lexer {
     }
 
     private stringOrName(): void {
-        // TODO: allow escaped quotes
+        // TODO: allow  \[...]\ escaping
         while (this.peek() != '"' && !this.isAtEnd()) {
+          if (this.peek() == '\\' && this.lookahead(2) == '!' && this.lookahead(3) == '"') {
+            this.advance(2)
+          }
           if (this.peek() == '\n') this.line++;
           this.advance();
         }
@@ -81,9 +84,8 @@ export class Lexer {
           return;
         }
 
-        if (this.peekNext() == 'n') {
-            this.advance(); // Closing "
-            this.advance(); // Closing n
+        if (this.lookahead(2) == 'n') {
+            this.advance(2); // Closing "n
             this.addToken(TokenType.NAME)
         } else {
             // The closing ".
@@ -101,7 +103,7 @@ export class Lexer {
         while (this.isDigit(this.peek())) this.advance();
     
         // Look for a fractional part.
-        if (this.peek() == '.' && this.isDigit(this.peekNext())) {
+        if (this.peek() == '.' && this.isDigit(this.lookahead(2))) {
           // Consume the "."
           this.advance();
 
@@ -126,14 +128,14 @@ export class Lexer {
         return true;
     }
 
+    private lookahead(n: number): string {
+        if (this.current + n - 1 >= this.source.length) return '\0';
+        return this.source.charAt(this.current + n - 1);
+    }
+
     private peek(): string {
         if (this.isAtEnd()) return '\0';
         return this.source.charAt(this.current);
-    }
-
-    private peekNext(): string {
-        if (this.current + 1 >= this.source.length) return '\0';
-        return this.source.charAt(this.current + 1);
     }
 
     private isNameStart(c: string): boolean {
@@ -155,8 +157,9 @@ export class Lexer {
         return this.current >= this.source.length;
     }
 
-    private advance(): string {
-        return this.source.charAt(this.current++);
+    private advance(n = 1): string {
+        this.current += n
+        return this.source.charAt(this.current - n);
     }
 
     private addToken(type: TokenType, literal?: Literal): void {
