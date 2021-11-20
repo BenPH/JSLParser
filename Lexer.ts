@@ -53,6 +53,11 @@ export class Lexer {
                 if (this.match('/')) {
                     // A comment goes until the end of the line.
                     while (this.peek() != '\n' && !this.isAtEnd()) this.advance();
+                } else if (this.match('*')) {
+                    while (this.peek() != '*' && this.lookahead(2) != '/' && !this.isAtEnd()) {
+                        this.advance();
+                    }
+                    if (!this.isAtEnd()) this.advance(2)
                 } else {
                     this.addToken(TokenType.SLASH);
                 }
@@ -64,7 +69,7 @@ export class Lexer {
             } else if (this.isNameStart(c)){
                 this.name();
             } else {
-                error(this.line, "Unexpected character"); break;
+                error(this.line, "Unexpected character '" + c + "'"); break;
             }
         }
     }
