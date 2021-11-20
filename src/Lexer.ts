@@ -142,10 +142,12 @@ export class Lexer {
     }
 
     private stringOrName(): void {
-        // TODO: allow  \[...]\ escaping
         while (this.lookahead(1) != '"' && !this.isAtEnd()) {
           if (this.lookahead(1) == '\\' && this.lookahead(2) == '!' && this.lookahead(3) == '"') {
-            this.advance(2)
+                this.advance(2);
+          } else if (this.lookahead(1) == '\\' && this.lookahead(2) == '[') {
+                this.advance(2);
+                this._rawString();
           }
           if (this.lookahead(1) == '\n') this.line++;
           this.advance();
@@ -168,6 +170,14 @@ export class Lexer {
             const value = this.source.substring(this.start + 1, this.current - 1);
             this.addToken(TokenType.STRING, value);
         }
+    }
+
+    private _rawString(): void {
+        while (!(this.lookahead(1) == ']' && this.lookahead(2) == '\\') && !this.isAtEnd()) {
+            if (this.lookahead(1) == '\n') this.line++;
+            this.advance();
+        }
+        if (!this.isAtEnd()) this.advance();
     }
 
     private number(): void {
@@ -265,4 +275,3 @@ export class Lexer {
         this.tokens.push(new Token(type, text, literal, this.line));
     }
 }
-
