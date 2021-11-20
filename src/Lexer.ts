@@ -131,7 +131,7 @@ export class Lexer {
             case '.': this.decimal(); break;
             default:
                 if (this.isDigit(c)) {
-                    this.number();
+                    this._tryDate() ? this.addToken(TokenType.NUMBER) : this.number();
                 } else if (this.isNameStart(c)){
                     this.name();
                 } else {
@@ -210,6 +210,16 @@ export class Lexer {
         if((this.lookahead(1) == '+' || this.lookahead(1) == '-') && this.isDigit(this.lookahead(2)))
             this.advance();
         while (this.isDigit(this.lookahead(1))) this.advance();
+    }
+
+    private _tryDate(): boolean {
+        const re = /^\d+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\d+(:\d+:\d+(:d+)?)?/gi
+
+        if (re.test(this.source.substring(this.start))) {
+            this.advance(re.lastIndex-1);
+            return true;
+        }
+        return false;
     }
 
     private name(): void {
