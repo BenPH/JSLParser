@@ -1,7 +1,9 @@
 import {Lexer} from './Lexer'
 import readline from 'readline';
 
+let hadError = false;
 export function error(line: number, message: string) {
+    hadError = true;
     console.log("[line " + line + "] Error: " + message)
 }
 

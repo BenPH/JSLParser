@@ -128,7 +128,7 @@ export class Lexer {
             case '\n':
                 this.line++;
                 break;
-            case '.': this.decimal(); break;
+            case '.': this.decimal(); break; // TODO: Require at least one digit after . before E
             default:
                 if (this.isDigit(c)) {
                     this._tryDate() ? this.addToken(TokenType.NUMBER) : this.number();
@@ -206,9 +206,13 @@ export class Lexer {
     }
 
     private _exponent(): void {
-        this.advance();
-        if((this.lookahead(1) == '+' || this.lookahead(1) == '-') && this.isDigit(this.lookahead(2)))
+        this.advance()
+        if((this.lookahead(1) == '+' || this.lookahead(1) == '-'))
             this.advance();
+        if(!this.isDigit(this.lookahead(1))) {
+            error(this.line, "Invalid numeric literal '" + this.source.substring(this.start, this.current) + "'");
+            return;
+        }
         while (this.isDigit(this.lookahead(1))) this.advance();
     }
 
