@@ -47,6 +47,7 @@ function runPrompt() {
 }
 
 function run(source: string, outputlex?: boolean) {
+    hadError = false;
     const lexer = new Lexer(source);
     const tokens = lexer.scanTokens();
     const parser = new Parser(tokens);

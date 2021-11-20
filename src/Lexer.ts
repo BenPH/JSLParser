@@ -166,7 +166,7 @@ export class Lexer {
 
             // Trim the surrounding quotes.
             // TODO: Replace escaped characters
-            const value = this.source.substring(this.start + 1, this.current - 1);
+            const value = '"' + this.source.substring(this.start + 1, this.current - 1) + '"';
             this.addToken(TokenType.STRING, value);
         }
     }
