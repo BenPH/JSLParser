@@ -39,70 +39,72 @@ export class Lexer {
             case '`': this.addToken(TokenType.BACK_QUOTE); break;
             case '&': this.addToken(TokenType.AND); break;
             case '|': {
-                const next = this.advance();
+                const next = this.lookahead(1);
                 switch (next) {
-                    case '|': this.addToken(this.match('=') ? TokenType.CONCAT_TO : TokenType.CONCAT); break;
-                    case '/': this.addToken(this.match('=') ? TokenType.VCONCAT_TO : TokenType.VCONCAT); break;
+                    case '|': this.advance(); this.addToken(this.match('=') ? TokenType.CONCAT_TO : TokenType.CONCAT); break;
+                    case '/': this.advance(); this.addToken(this.match('=') ? TokenType.VCONCAT_TO : TokenType.VCONCAT); break;
                     default: this.addToken(TokenType.OR); break;
                 }
                 break;
             }
             case ':': {
-                const next = this.advance();
+                const next = this.lookahead(1);
                 switch (next) {
-                    case '/': this.addToken(TokenType.EDIV); break;
-                    case '*': this.addToken(TokenType.EMUL); break;
-                    case ':': this.addToken(this.match(':') ? TokenType.TRIPLE_COLON : TokenType.DOUBLE_COLON); break;
+                    case '/': this.advance(); this.addToken(TokenType.EDIV); break;
+                    case '*': this.advance(); this.addToken(TokenType.EMUL); break;
+                    case ':': this.advance(); this.addToken(this.match(':') ? TokenType.TRIPLE_COLON : TokenType.DOUBLE_COLON); break;
                     default: this.addToken(TokenType.COLON); break;
                 }
                 break;
             }
             case '+': {
-                const next = this.advance();
+                const next = this.lookahead(1);
                 switch(next) {
-                    case '+': this.addToken(TokenType.INC); break;
-                    case '=': this.addToken(TokenType.ADD_TO); break;
+                    case '+': this.advance(); this.addToken(TokenType.INC); break;
+                    case '=': this.advance(); this.addToken(TokenType.ADD_TO); break;
                     default: this.addToken(TokenType.PLUS); break;
                 }
                 break;
             }
             case '-': {
-                const next = this.advance();
+                const next = this.lookahead(1);
                 switch(next) {
-                    case '-': this.addToken(TokenType.DEC); break;
-                    case '=': this.addToken(TokenType.SUBTRACT_TO); break;
+                    case '-': this.advance(); this.addToken(TokenType.DEC); break;
+                    case '=': this.advance(); this.addToken(TokenType.SUBTRACT_TO); break;
                     default: this.addToken(TokenType.MINUS); break;
                 }
                 break;
             }
-            case '*': this.addToken(TokenType.MUL); break;
+            case '*':
+                this.addToken(this.match('=') ? TokenType.MUL_TO : TokenType.MUL);
+                break;
             case '!':
                 this.addToken(this.match('=') ? TokenType.NOT_EQUAL : TokenType.NOT);
                 break;
             case '=':{
-                const next = this.advance();
+                const next = this.lookahead(1);
                 switch(next) {
-                    case '=': this.addToken(TokenType.EQUAL); break;
-                    case '>': this.addToken(TokenType.ARROW); break;
+                    case '=': this.advance(); this.addToken(TokenType.EQUAL); break;
+                    case '>': this.advance(); this.addToken(TokenType.ARROW); break;
                     default: this.addToken(TokenType.ASSIGN); break;
                 }
                 break;
             }
             case '<': {
-                const next = this.advance();
+                const next = this.lookahead(1);
                 switch(next) {
-                    case '=': this.addToken(TokenType.LESS_EQUAL); break;
-                    case '<': this.addToken(TokenType.SEND); break;
+                    case '=': this.advance(); this.addToken(TokenType.LESS_EQUAL); break;
+                    case '<': this.advance(); this.addToken(TokenType.SEND); break;
                     default: this.addToken(TokenType.LESS); break;
                 }
                 break;
             }
             case '>': {
-                const next = this.advance();
+                const next = this.lookahead(1);
                 switch(next) {
-                    case '=': this.addToken(TokenType.GREATER_EQUAL); break;
-                    case '>': this.addToken(TokenType.PAT_IMMEDIATE); break;
-                    case '?': this.addToken(TokenType.PAT_CONDITIONAL); break;
+                    case '=': this.advance(); this.addToken(TokenType.GREATER_EQUAL); break;
+                    case '>': this.advance(); this.addToken(TokenType.PAT_IMMEDIATE); break;
+                    case '?': this.advance(); this.addToken(TokenType.PAT_CONDITIONAL); break;
                     default: this.addToken(TokenType.GREATER); break;
                 }
                 break;
@@ -126,6 +128,7 @@ export class Lexer {
             case '\n':
                 this.line++;
                 break;
+            case '.': this.decimal(); break;
             default:
                 if (this.isDigit(c)) {
                     this.number();
@@ -168,20 +171,35 @@ export class Lexer {
     }
 
     private number(): void {
-        // TODO: add missing (.) and starting with . numbers
         while (this.isDigit(this.lookahead(1))) this.advance();
-    
-        // Look for a fractional part.
-        if (this.lookahead(1) == '.' && this.isDigit(this.lookahead(2))) {
-          // Consume the "."
-          this.advance();
 
-          // TODO: add scientific notation
-          while (this.isDigit(this.lookahead(1))) this.advance();
+        if (this.lookahead(1) == '.') {
+            this.advance();
+            this.decimal();
+        } else {
+            if(this.lookahead(1).toLowerCase() == 'e') {
+                this._exponent();
+            } 
+            this.addToken(TokenType.NUMBER,
+                parseFloat(this.source.substring(this.start, this.current)));
         }
-    
+    }
+
+    private decimal(): void {
+        while (this.isDigit(this.lookahead(1))) this.advance();
+
+        if (this.lookahead(1).toLowerCase() == 'e') {
+            this._exponent();
+        }
         this.addToken(TokenType.NUMBER,
             parseFloat(this.source.substring(this.start, this.current)));
+    }
+
+    private _exponent(): void {
+        this.advance();
+        if((this.lookahead(1) == '+' || this.lookahead(1) == '-') && this.isDigit(this.lookahead(2)))
+            this.advance();
+        while (this.isDigit(this.lookahead(1))) this.advance();
     }
 
     private name(): void {
