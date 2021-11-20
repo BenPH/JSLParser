@@ -36,7 +36,7 @@ export class Lexer {
             case '-': this.addToken(TokenType.MINUS); break;
             case '+': this.addToken(TokenType.PLUS); break;
             case ';': this.addToken(TokenType.SEMICOLON); break;
-            case '*': this.addToken(TokenType.STAR); break;
+            case '*': this.addToken(TokenType.MULTIPLY); break;
             case '!':
                 this.addToken(this.match('=') ? TokenType.NOT_EQUAL : TokenType.NOT);
                 break;
@@ -52,14 +52,11 @@ export class Lexer {
             case '/':
                 if (this.match('/')) {
                     // A comment goes until the end of the line.
-                    while (this.peek() != '\n' && !this.isAtEnd()) this.advance();
+                    while (this.lookahead(1) != '\n' && !this.isAtEnd()) this.advance();
                 } else if (this.match('*')) {
-                    while (this.peek() != '*' && this.lookahead(2) != '/' && !this.isAtEnd()) {
-                        this.advance();
-                    }
-                    if (!this.isAtEnd()) this.advance(2)
+                    this.blockComment();
                 } else {
-                    this.addToken(TokenType.SLASH);
+                    this.addToken(TokenType.DIVIDE);
                 }
                 break;
             case '"': this.stringOrName(); break;
@@ -76,11 +73,11 @@ export class Lexer {
 
     private stringOrName(): void {
         // TODO: allow  \[...]\ escaping
-        while (this.peek() != '"' && !this.isAtEnd()) {
-          if (this.peek() == '\\' && this.lookahead(2) == '!' && this.lookahead(3) == '"') {
+        while (this.lookahead(1) != '"' && !this.isAtEnd()) {
+          if (this.lookahead(1) == '\\' && this.lookahead(2) == '!' && this.lookahead(3) == '"') {
             this.advance(2)
           }
-          if (this.peek() == '\n') this.line++;
+          if (this.lookahead(1) == '\n') this.line++;
           this.advance();
         }
 
@@ -105,15 +102,15 @@ export class Lexer {
 
     private number(): void {
         // TODO: add missing (.) and starting with . numbers
-        while (this.isDigit(this.peek())) this.advance();
+        while (this.isDigit(this.lookahead(1))) this.advance();
     
         // Look for a fractional part.
-        if (this.peek() == '.' && this.isDigit(this.lookahead(2))) {
+        if (this.lookahead(1) == '.' && this.isDigit(this.lookahead(2))) {
           // Consume the "."
           this.advance();
 
           // TODO: add scientific notation
-          while (this.isDigit(this.peek())) this.advance();
+          while (this.isDigit(this.lookahead(1))) this.advance();
         }
     
         this.addToken(TokenType.NUMBER,
@@ -121,9 +118,21 @@ export class Lexer {
     }
 
     private name(): void {
-    while (this.isNameContinue(this.peek())) this.advance();
+        while (this.isNameContinue(this.lookahead(1))) this.advance();
 
         this.addToken(TokenType.NAME);
+    }
+
+    private blockComment(): void {
+        while (!(this.lookahead(1) == '*' && this.lookahead(2) == '/') && !this.isAtEnd()) {
+            if (this.lookahead(1) == '/' && this.lookahead(2) == '*') {
+                this.advance(2);
+                this.blockComment();
+            } else {
+                this.advance();
+            }
+        }
+        if (!this.isAtEnd()) this.advance(2)
     }
 
     private match(expected: string): boolean {
@@ -136,11 +145,6 @@ export class Lexer {
     private lookahead(n: number): string {
         if (this.current + n - 1 >= this.source.length) return '\0';
         return this.source.charAt(this.current + n - 1);
-    }
-
-    private peek(): string {
-        if (this.isAtEnd()) return '\0';
-        return this.source.charAt(this.current);
     }
 
     private isNameStart(c: string): boolean {

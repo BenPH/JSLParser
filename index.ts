@@ -41,3 +41,4 @@ function run(source: string) {
 }
 
 runPrompt();
+// run('/*abc/**/ab*/')
