@@ -1,6 +1,5 @@
-import {Token, TokenType} from './Token'
-import {error} from './index'
-import {Literal} from './types'
+import {Literal, Token, TokenType} from './Token'
+import {report} from './index'
 
 export class Lexer {
     private source: string;
@@ -135,7 +134,7 @@ export class Lexer {
                 } else if (this.isNameStart(c)){
                     this.name();
                 } else {
-                    error(this.line, "Unexpected character '" + c + "'");
+                    report(this.line, "", "Unexpected character '" + c + "'");
                 }
                 break;
         }
@@ -154,7 +153,7 @@ export class Lexer {
         }
 
         if (this.isAtEnd()) {
-          error(this.line, "Unterminated string.");
+          report(this.line, "", "Unterminated string.");
           return;
         }
 
@@ -210,7 +209,7 @@ export class Lexer {
         if((this.lookahead(1) == '+' || this.lookahead(1) == '-'))
             this.advance();
         if(!this.isDigit(this.lookahead(1))) {
-            error(this.line, "Invalid numeric literal '" + this.source.substring(this.start, this.current) + "'");
+            report(this.line, "", "Invalid numeric literal '" + this.source.substring(this.start, this.current) + "'");
             return;
         }
         while (this.isDigit(this.lookahead(1))) this.advance();

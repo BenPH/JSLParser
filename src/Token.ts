@@ -1,4 +1,3 @@
-import {Literal} from './types'
 
 export enum TokenType {
     INC, DEC,
@@ -33,6 +32,8 @@ export enum TokenType {
 
     EOF
 }
+
+export type Literal = string | number | undefined
 
 export class Token {
     readonly type: TokenType;
