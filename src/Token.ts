@@ -32,6 +32,6 @@ export class Token {
     }
 
     public toString() {
-        return "type: " + TokenType[this.type] + ", lexeme: " + this.lexeme + ", value: " + this.literal
+        return "type: " + TokenType[this.type] + ", lexeme: " + this.lexeme + ", value: " + this.literal + " @line: " + this.line
     }
 }

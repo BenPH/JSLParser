@@ -60,14 +60,23 @@ export class Lexer {
                 }
                 break;
             case '"': this.stringOrName(); break;
-          default:
-            if (this.isDigit(c)) {
-                this.number();
-            } else if (this.isNameStart(c)){
-                this.name();
-            } else {
-                error(this.line, "Unexpected character '" + c + "'"); break;
-            }
+            case ' ':
+            case '\r':
+            case '\t':
+                // Ignore whitespace.
+                break;
+            case '\n':
+                this.line++;
+                break;
+            default:
+                if (this.isDigit(c)) {
+                    this.number();
+                } else if (this.isNameStart(c)){
+                    this.name();
+                } else {
+                    error(this.line, "Unexpected character '" + c + "'");
+                }
+                break;
         }
     }
 
@@ -129,6 +138,7 @@ export class Lexer {
                 this.advance(2);
                 this.blockComment();
             } else {
+                if (this.lookahead(1) == '\n') this.line++;
                 this.advance();
             }
         }
