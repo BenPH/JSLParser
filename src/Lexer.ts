@@ -222,8 +222,11 @@ export class Lexer {
     }
 
     private isNameContinue(c: string): boolean {
-        // TODO: add other allowed characters
-        return this.isNameStart(c) || this.isDigit(c);
+        if (c == '\n') {
+            this.line++;
+            return true
+        }
+        return /[A-Za-z0-9_'#$%.?\s]/.test(c);
     }
 
     private isDigit(c: string): boolean {
