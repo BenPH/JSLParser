@@ -27,28 +27,86 @@ export class Lexer {
     private scanToken(): void {
         const c = this.advance();
         switch (c) {
-            case '(': this.addToken(TokenType.LEFT_PAREN); break;
-            case ')': this.addToken(TokenType.RIGHT_PAREN); break;
-            case '{': this.addToken(TokenType.LEFT_BRACE); break;
-            case '}': this.addToken(TokenType.RIGHT_BRACE); break;
+            case '(': this.addToken(TokenType.OPEN_PAREN); break;
+            case ')': this.addToken(TokenType.CLOSE_PAREN); break;
+            case '{': this.addToken(TokenType.OPEN_BRACE); break;
+            case '}': this.addToken(TokenType.CLOSE_BRACE); break;
+            case '[': this.addToken(TokenType.OPEN_BRACKET); break;
+            case ']': this.addToken(TokenType.CLOSE_BRACKET); break;
             case ',': this.addToken(TokenType.COMMA); break;
-            case '.': this.addToken(TokenType.DOT); break;
-            case '-': this.addToken(TokenType.MINUS); break;
-            case '+': this.addToken(TokenType.PLUS); break;
-            case ';': this.addToken(TokenType.SEMICOLON); break;
-            case '*': this.addToken(TokenType.MULTIPLY); break;
+            case ';': this.addToken(TokenType.GLUE); break;
+            case '^': this.addToken(TokenType.POWER); break;
+            case '`': this.addToken(TokenType.BACK_QUOTE); break;
+            case '&': this.addToken(TokenType.AND); break;
+            case '|': {
+                const next = this.advance();
+                switch (next) {
+                    case '|': this.addToken(this.match('=') ? TokenType.CONCAT_TO : TokenType.CONCAT); break;
+                    case '/': this.addToken(this.match('=') ? TokenType.VCONCAT_TO : TokenType.VCONCAT); break;
+                    default: this.addToken(TokenType.OR); break;
+                }
+                break;
+            }
+            case ':': {
+                const next = this.advance();
+                switch (next) {
+                    case '/': this.addToken(TokenType.EDIV); break;
+                    case '*': this.addToken(TokenType.EMUL); break;
+                    case ':': this.addToken(this.match(':') ? TokenType.TRIPLE_COLON : TokenType.DOUBLE_COLON); break;
+                    default: this.addToken(TokenType.COLON); break;
+                }
+                break;
+            }
+            case '+': {
+                const next = this.advance();
+                switch(next) {
+                    case '+': this.addToken(TokenType.INC); break;
+                    case '=': this.addToken(TokenType.ADD_TO); break;
+                    default: this.addToken(TokenType.PLUS); break;
+                }
+                break;
+            }
+            case '-': {
+                const next = this.advance();
+                switch(next) {
+                    case '-': this.addToken(TokenType.DEC); break;
+                    case '=': this.addToken(TokenType.SUBTRACT_TO); break;
+                    default: this.addToken(TokenType.MINUS); break;
+                }
+                break;
+            }
+            case '*': this.addToken(TokenType.MUL); break;
             case '!':
                 this.addToken(this.match('=') ? TokenType.NOT_EQUAL : TokenType.NOT);
                 break;
-            case '=':
-                this.addToken(this.match('=') ? TokenType.EQUAL_EQUAL : TokenType.EQUAL);
+            case '=':{
+                const next = this.advance();
+                switch(next) {
+                    case '=': this.addToken(TokenType.EQUAL); break;
+                    case '>': this.addToken(TokenType.ARROW); break;
+                    default: this.addToken(TokenType.ASSIGN); break;
+                }
                 break;
-            case '<':
-                this.addToken(this.match('=') ? TokenType.LESS_EQUAL : TokenType.LESS);
+            }
+            case '<': {
+                const next = this.advance();
+                switch(next) {
+                    case '=': this.addToken(TokenType.LESS_EQUAL); break;
+                    case '<': this.addToken(TokenType.SEND); break;
+                    default: this.addToken(TokenType.LESS); break;
+                }
                 break;
-            case '>':
-                this.addToken(this.match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER);
+            }
+            case '>': {
+                const next = this.advance();
+                switch(next) {
+                    case '=': this.addToken(TokenType.GREATER_EQUAL); break;
+                    case '>': this.addToken(TokenType.PAT_IMMEDIATE); break;
+                    case '?': this.addToken(TokenType.PAT_CONDITIONAL); break;
+                    default: this.addToken(TokenType.GREATER); break;
+                }
                 break;
+            }
             case '/':
                 if (this.match('/')) {
                     // A comment goes until the end of the line.
@@ -56,7 +114,7 @@ export class Lexer {
                 } else if (this.match('*')) {
                     this.blockComment();
                 } else {
-                    this.addToken(TokenType.DIVIDE);
+                    this.addToken(TokenType.DIV);
                 }
                 break;
             case '"': this.stringOrName(); break;

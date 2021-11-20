@@ -1,18 +1,34 @@
 import {Literal} from './types'
 
 export enum TokenType {
-    // Single-character tokens.
-    LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,
-    COMMA, DOT, MINUS, PLUS, SEMICOLON, DIVIDE, MULTIPLY,
-
-    // One or two character tokens.
-    NOT, NOT_EQUAL,
-    EQUAL, EQUAL_EQUAL,
-    GREATER, GREATER_EQUAL,
+    INC, DEC,
+    POWER,
+    NOT,
+    MUL, EMUL, DIV, EDIV,
+    PLUS, MINUS,
+    CONCAT, VCONCAT,
+    SEND,
+    EQUAL, NOT_EQUAL,
     LESS, LESS_EQUAL,
+    GREATER, GREATER_EQUAL,
+    AND, OR,
+    ASSIGN,
+    ADD_TO, SUBTRACT_TO,
+    MUL_TO, DIV_TO,
+    CONCAT_TO, VCONCAT_TO,
+    GLUE,
+    COLON, DOUBLE_COLON, TRIPLE_COLON,
+    BACK_QUOTE,
     ARROW,
+    PAT_CONDITIONAL,
+    PAT_IMMEDIATE,
+    COMMA,
 
-    // Literals.
+    OPEN_PAREN, CLOSE_PAREN,
+    OPEN_BRACE, CLOSE_BRACE,
+    OPEN_BRACKET, CLOSE_BRACKET,
+
+    // Literals
     NAME, STRING, NUMBER,
 
     EOF
@@ -22,7 +38,7 @@ export class Token {
     readonly type: TokenType;
     readonly lexeme: string;
     readonly literal: Literal;
-    readonly line: number; 
+    readonly line: number;
 
     constructor(type: TokenType , lexeme: string, literal: Literal, line: number) {
         this.type = type;
