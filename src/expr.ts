@@ -21,6 +21,7 @@ export interface Expr {
 export class Assign implements Expr {
     constructor(
         readonly variable: Variable,
+        readonly operator: Token,
         readonly value: Expr
     ) { }
 

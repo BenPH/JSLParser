@@ -16,7 +16,7 @@ export default class AstPrinter implements ExprVisitor<string> {
   }
 
   visitAssignExpr(expr: Assign): string {
-    return this.parenthesize(`assign ${expr.variable.name.lexeme}`, [ expr.value ]);
+    return this.parenthesize(`${expr.operator.lexeme} ${expr.variable.name.lexeme}`, [ expr.value ]);
   }
 
   visitVariableExpr(expr: Variable): string {

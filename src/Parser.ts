@@ -37,24 +37,30 @@ export class Parser {
     private expression() {
         return this.assignment();
     }
-    
+
     private assignment(): Expr {
         const expr = this.equality();
-        
-        if (this.match(TokenType.ASSIGN)) {
+
+        if (this.match(TokenType.ASSIGN,
+                        TokenType.ADD_TO,
+                        TokenType.SUBTRACT_TO,
+                        TokenType.MUL_TO,
+                        TokenType.DIV_TO,
+                        TokenType.CONCAT_TO,
+                        TokenType.VCONCAT_TO)) {
             const equals = this.previous();
             const value = this.assignment();
-            
+
             if (expr instanceof Variable) {
-                return new Assign(expr, value);
+                return new Assign(expr, equals, value);
             }
-            
-            this.error(equals, "Invalid assignment target."); 
+
+            this.error(equals, "Invalid assignment target.");
         }
-        
+
         return expr;
     }
-    
+
     private equality(): Expr {
         let expr = this.comparison();
         
