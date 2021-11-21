@@ -152,10 +152,11 @@ export class Parser {
         return this.power();
     }
 
+    // Right-associative. Also includes >> and >?.
     private power(): Expr {
         const expr = this.postUnary();
         
-        if (this.match(TokenType.POWER)) {
+        if (this.match(TokenType.POWER, TokenType.PAT_IMMEDIATE, TokenType.PAT_CONDITIONAL)) {
             const operator = this.previous();
             const right = this.power();
             return new Binary(expr, operator, right);
@@ -165,7 +166,7 @@ export class Parser {
 
     private postUnary(): Expr {
         let expr = this.scopedUnary();
-        while (this.match(TokenType.INC, TokenType.DEC)) {
+        while (this.match(TokenType.INC, TokenType.DEC, TokenType.BACK_QUOTE)) {
             const operator = this.previous();
             expr = new PostUnary(expr, operator);
         }
