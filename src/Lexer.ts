@@ -216,7 +216,7 @@ export class Lexer {
     }
 
     private _tryDate(): boolean {
-        const re = /^\d+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\d+(:\d+:\d+(:d+)?)?/gi
+        const re = /^\d+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\d+(:\d+:\d+(:\d+)?)?/gi
 
         if (re.test(this.source.substring(this.start))) {
             this.advance(re.lastIndex-1);
