@@ -1,4 +1,4 @@
-import { Expr, ExprVisitor, Literal, PostUnary, PreUnary, Binary, Grouping, Variable, Assign, Logical } from '../src/expr';
+import { Expr, ExprVisitor, Literal, PostUnary, PreUnary, Binary, Grouping, Variable, Assign, Logical, List } from '../src/expr';
 
 export default class AstPrinter implements ExprVisitor<string> {
 //   visitGetterExpr(expr: Getter): string {
@@ -33,6 +33,10 @@ export default class AstPrinter implements ExprVisitor<string> {
 
   visitGroupingExpr(expr: Grouping): string {
     return this.parenthesize('group', [ expr.expression ]);
+  }
+
+  visitListExpr(expr: List): string {
+    return this.parenthesize('list', [ ...expr.contents ]);
   }
 
   visitLiteralExpr(expr: Literal): string {

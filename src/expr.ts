@@ -8,6 +8,7 @@ export interface ExprVisitor<T> {
     // visitCallExpr(expr: Call): T
     // visitGetExpr(expr: Get): T
     visitGroupingExpr(expr: Grouping): T
+    visitListExpr(expr: List): T
     visitLiteralExpr(expr: Literal): T
     visitLogicalExpr(expr: Logical): T
     visitPostUnaryExpr(expr: PostUnary): T
@@ -48,6 +49,14 @@ export class Grouping implements Expr {
 
     accept<T>(visitor: ExprVisitor<T>): T {
         return visitor.visitGroupingExpr(this)
+    }
+}
+
+export class List implements Expr {
+    constructor(readonly contents: Expr[]) {}
+
+    accept<T>(visitor: ExprVisitor<T>): T {
+        return visitor.visitListExpr(this)
     }
 }
 

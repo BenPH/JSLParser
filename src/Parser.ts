@@ -10,7 +10,8 @@ import {
     Logical,
     PostUnary,
     LiteralNumeric,
-    LiteralString
+    LiteralString,
+    List
 } from './expr';
 import {printParseError} from './index'
 
@@ -204,6 +205,11 @@ export class Parser {
             return new Variable(this.previous());
         }
         
+        if (this.match(TokenType.OPEN_BRACE)) {
+            const list = this.listContents();
+            return new List(list);
+        }
+
         if (this.match(TokenType.OPEN_PAREN)) {
             const expr = this.expression();
             this.consume(TokenType.CLOSE_PAREN, "Expected ')' after expression.");
@@ -211,6 +217,18 @@ export class Parser {
         }
         
         throw this.error(this.peek(), "Expected an expression.");
+    }
+
+    private listContents(): Expr[] {
+        const contents: Expr[] = []
+        while(!this.check(TokenType.CLOSE_BRACE)) {
+            const expr = this.expression();
+            contents.push(expr);
+            if(this.match(TokenType.CLOSE_BRACE))
+                return contents;
+            this.consume(TokenType.COMMA, "Expected a ',' or '}'.")
+        }
+        return contents;
     }
     
     private match(...types: TokenType[]): boolean {
