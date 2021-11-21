@@ -37,7 +37,20 @@ export class Parser {
 
     // Productions are ordered from low to high precedence
     private expression() {
-        return this.assignment();
+        return this.glue();
+    }
+
+    private glue() {
+        // Consume GLUE 
+        // while (this.match(TokenType.GLUE)) continue;
+
+        let expr = this.assignment();
+        while (this.match(TokenType.GLUE)) {
+            const operator = this.previous();
+            const right = this.glue();
+            expr = new Binary(expr, operator, right);
+        } // TODO: Allow trailing glue
+        return expr;
     }
 
     private assignment(): Expr {
@@ -53,7 +66,7 @@ export class Parser {
             const operator = this.previous();
             const value = this.assignment();
 
-            if (expr instanceof Variable) {
+            if (expr instanceof Variable) { // TODO: Probably disable for CST
                 return new Assign(expr, operator, value);
             }
 
