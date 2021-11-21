@@ -206,8 +206,7 @@ export class Parser {
         }
         
         if (this.match(TokenType.OPEN_BRACE)) {
-            const list = this.listContents();
-            return new List(list);
+            return new List(this.listContents());
         }
 
         if (this.match(TokenType.OPEN_PAREN)) {
@@ -221,16 +220,21 @@ export class Parser {
 
     private listContents(): Expr[] {
         const contents: Expr[] = []
-        while(!this.check(TokenType.CLOSE_BRACE)) {
+        while(this.match(TokenType.COMMA)) continue; // allow multiple commas at start
+        while(!this.check(TokenType.CLOSE_BRACE) && !this.isAtEnd()) {
             const expr = this.expression();
             contents.push(expr);
             if(this.match(TokenType.CLOSE_BRACE))
                 return contents;
             this.consume(TokenType.COMMA, "Expected a ',' or '}'.")
+            while(this.check(TokenType.COMMA)) this.advance(); // allow multiple commas inbetween
         }
+        if(this.previous().type == TokenType.COMMA)
+            this.error(this.previous(), "Unexpected ',' at end of list.");
+        this.consume(TokenType.CLOSE_BRACE, "Expected a '}'.");
         return contents;
     }
-    
+
     private match(...types: TokenType[]): boolean {
         for (const type of types) {
             if (this.check(type)) {
