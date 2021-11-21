@@ -59,6 +59,9 @@ export class Literal implements Expr {
     }
 }
 
+export class LiteralNumeric extends Literal {}
+export class LiteralString extends Literal {}
+
 export class Logical implements Expr {
     constructor(
         readonly left: Expr,

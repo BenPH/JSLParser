@@ -8,7 +8,9 @@ import {
     Variable,
     Assign,
     Logical,
-    PostUnary
+    PostUnary,
+    LiteralNumeric,
+    LiteralString
 } from './expr';
 import {printParseError} from './index'
 
@@ -162,7 +164,7 @@ export class Parser {
     }
 
     private postUnary(): Expr {
-        let expr = this.primary();
+        let expr = this.scopedBinary();
         while (this.match(TokenType.INC, TokenType.DEC)) {
             const operator = this.previous();
             expr = new PostUnary(expr, operator);
@@ -170,9 +172,26 @@ export class Parser {
         return expr;
     }
 
+    private scopedBinary(): Expr {
+        let expr = this.primary();
+        while (this.match(TokenType.COLON)) {
+            const operator = this.previous();
+            const right = this.primary();
+            if (expr instanceof LiteralNumeric || right instanceof LiteralNumeric) {
+                throw this.error(operator, "The ':' operator does not accept numeric values")
+            }
+            expr = new Binary(expr, operator, right);
+        }
+        return expr;
+    }
+
     private primary(): Expr {
-        if (this.match(TokenType.NUMBER, TokenType.STRING)) {
-            return new Literal(this.previous().literal);
+        if (this.match(TokenType.NUMBER)) {
+            return new LiteralNumeric(this.previous().literal);
+        }
+
+        if (this.match(TokenType.STRING)) {
+            return new LiteralString(this.previous().literal);
         }
         
         if (this.match(TokenType.NAME)) {
