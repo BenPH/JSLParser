@@ -39,7 +39,7 @@ export class Parser {
     }
 
     private assignment(): Expr {
-        const expr = this.equality();
+        const expr = this.comparison();
 
         if (this.match(TokenType.ASSIGN,
                         TokenType.ADD_TO,
@@ -61,22 +61,15 @@ export class Parser {
         return expr;
     }
 
-    private equality(): Expr {
-        let expr = this.comparison();
-        
-        while (this.match(TokenType.NOT_EQUAL, TokenType.EQUAL)) {
-            const operator = this.previous();
-            const right = this.comparison();
-            expr = new Binary(expr, operator, right);
-        }
-        
-        return expr;
-    }
-    
     private comparison(): Expr {
         let expr = this.term();
         
-        while (this.match(TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS, TokenType.LESS_EQUAL)) {
+        while (this.match(TokenType.NOT_EQUAL,
+                            TokenType.EQUAL,
+                            TokenType.GREATER,
+                            TokenType.GREATER_EQUAL,
+                            TokenType.LESS,
+                            TokenType.LESS_EQUAL)) {
             const operator = this.previous();
             const right = this.term();
             expr = new Binary(expr, operator, right);
