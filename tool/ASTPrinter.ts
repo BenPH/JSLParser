@@ -1,4 +1,4 @@
-import { Expr, ExprVisitor, Literal, PostUnary, PreUnary, Binary, Grouping, Variable, Assign, Logical, List } from '../src/expr';
+import { Expr, ExprVisitor, Literal, PostUnary, PreUnary, Binary, Grouping, Variable, Assign, Logical, List, Matrix } from '../src/expr';
 
 export default class AstPrinter implements ExprVisitor<string> {
 //   visitGetterExpr(expr: Getter): string {
@@ -45,6 +45,10 @@ export default class AstPrinter implements ExprVisitor<string> {
     }
 
     return String(expr.value);
+  }
+
+  visitMatrixExpr(expr: Matrix): string {
+    return '[' + expr.contents.map((row)=>row.map((n)=>n.accept<string>(this)).join(' ')).join(', ') + ']';
   }
 
   visitPostUnaryExpr(expr: PostUnary): string {

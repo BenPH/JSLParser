@@ -11,6 +11,7 @@ export interface ExprVisitor<T> {
     visitListExpr(expr: List): T
     visitLiteralExpr(expr: Literal): T
     visitLogicalExpr(expr: Logical): T
+    visitMatrixExpr(expr: Matrix): T
     visitPostUnaryExpr(expr: PostUnary): T
     visitPreUnaryExpr(expr: PreUnary): T
     visitVariableExpr(expr: Variable): T
@@ -80,6 +81,14 @@ export class Logical implements Expr {
 
     accept<T>(visitor: ExprVisitor<T>): T {
         return visitor.visitLogicalExpr(this)
+    }
+}
+
+export class Matrix implements Expr {
+    constructor(readonly contents: LiteralNumeric[][]) {}
+
+    accept<T>(visitor: ExprVisitor<T>): T {
+        return visitor.visitMatrixExpr(this)
     }
 }
 

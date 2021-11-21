@@ -33,7 +33,7 @@ export class Lexer {
             case '[': this.addToken(TokenType.OPEN_BRACKET); break;
             case ']': this.addToken(TokenType.CLOSE_BRACKET); break;
             case ',': this.addToken(TokenType.COMMA); break;
-            case ';': this.addToken(TokenType.GLUE); break;
+            case ';': this.addToken(TokenType.SEMICOLON); break;
             case '^': this.addToken(TokenType.POWER); break;
             case '`': this.addToken(TokenType.BACK_QUOTE); break;
             case '&': this.addToken(TokenType.AND); break;

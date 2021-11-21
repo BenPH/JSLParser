@@ -22,6 +22,10 @@ export function report(line: number, where: string, message: string) {
 }
 
 function runPrompt() {
+    let lex = false;
+    if (process.argv.length > 2) {
+        lex = !!process.argv[2].valueOf;
+    }
     let text: string[] = [];
     const rl = readline.createInterface({
         input: process.stdin,
@@ -33,7 +37,7 @@ function runPrompt() {
             text.push(line.slice(0, -1));
         } else {
             text.push(line)
-            run(text.join('\n'));
+            run(text.join('\n'), lex);
             text = [];
             rl.prompt();
         }
@@ -66,4 +70,4 @@ function run(source: string, outputlex?: boolean) {
 }
 
 runPrompt();
-// run('1 abc')
+// run('[1 2; 3 4]')

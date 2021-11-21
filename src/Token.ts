@@ -15,7 +15,7 @@ export enum TokenType {
     ADD_TO, SUBTRACT_TO,
     MUL_TO, DIV_TO,
     CONCAT_TO, VCONCAT_TO,
-    GLUE,
+    SEMICOLON,
     COLON, DOUBLE_COLON, TRIPLE_COLON,
     BACK_QUOTE,
     ARROW,

@@ -11,7 +11,8 @@ import {
     PostUnary,
     LiteralNumeric,
     LiteralString,
-    List
+    List,
+    Matrix
 } from './expr';
 import {printParseError} from './index'
 
@@ -48,7 +49,7 @@ export class Parser {
         // while (this.match(TokenType.GLUE)) continue;
 
         let expr = this.assignment();
-        while (this.match(TokenType.GLUE)) {
+        while (this.match(TokenType.SEMICOLON)) {
             const operator = this.previous();
             const right = this.glue();
             expr = new Binary(expr, operator, right);
@@ -209,6 +210,10 @@ export class Parser {
             return new List(this.listContents());
         }
 
+        if (this.match(TokenType.OPEN_BRACKET)) {
+            return new Matrix(this.matrixContents())
+        }
+
         if (this.match(TokenType.OPEN_PAREN)) {
             const expr = this.expression();
             this.consume(TokenType.CLOSE_PAREN, "Expected ')' after expression.");
@@ -230,8 +235,60 @@ export class Parser {
             while(this.check(TokenType.COMMA)) this.advance(); // allow multiple commas inbetween
         }
         if(this.previous().type == TokenType.COMMA)
-            this.error(this.previous(), "Unexpected ',' at end of list.");
+            throw this.error(this.previous(), "Unexpected ',' at end of list."); // TODO: Maybe don't need to `throw` here. Automatic resync?
         this.consume(TokenType.CLOSE_BRACE, "Expected a '}'.");
+        return contents;
+    }
+
+    private matrixContents(): LiteralNumeric[][] {
+        const contents: LiteralNumeric[][] = [];
+        let rowLength;
+        let row: LiteralNumeric[];
+        while (!this.check(TokenType.CLOSE_BRACKET) && !this.isAtEnd()) {
+            row = [];
+            while(!this.check(TokenType.SEMICOLON) &&
+                    !this.check(TokenType.COMMA) &&
+                    !this.check(TokenType.CLOSE_BRACKET) && 
+                    !this.isAtEnd()) {
+
+                // TODO: Technically a space separated + or - is allowed on it's own
+                // representing +1, -1, but...
+                let sign = 1;
+                if (this.match(TokenType.MINUS)) {
+                    sign = -1;
+                } else if (this.match(TokenType.PLUS)) {
+                    sign = 1;
+                }
+                const numToken = this.consume(TokenType.NUMBER, "Invalid matrix token. Only numeric literals can be used.");
+                let num = numToken.literal;
+                if (!num) num = NaN;
+                row.push(new LiteralNumeric(sign * (num as number)));
+            }
+
+            if (this.previous().type == TokenType.SEMICOLON) {
+                throw this.error(this.peek(), "Duplicate ';' in matrix."); // TODO: Maybe don't need to `throw` here. Automatic resync?
+            } else if (this.previous().type == TokenType.COMMA) {
+                throw this.error(this.peek(), "Duplicate ',' in matrix."); // TODO: Maybe don't need to `throw` here. Automatic resync?
+            }
+
+            if (!rowLength) {
+                rowLength = row.length;
+            } else if (row.length != rowLength) {
+                throw this.error(this.peek(), "Inconsistent lengths of rows in matrix.");
+            }
+            contents.push(row);
+
+            if (this.check(TokenType.SEMICOLON) || this.check(TokenType.COMMA)) {
+                this.advance(); // Advance past the ; or ,
+            }
+        }
+        if (this.previous().type == TokenType.SEMICOLON) {
+            throw this.error(this.previous(), "Unexpected ';' at end of matrix."); // Do not throw
+        } else if (this.previous().type == TokenType.COMMA) {
+            throw this.error(this.previous(), "Unexpected ',' at end of matrix."); // Do not throw
+        }
+        this.consume(TokenType.CLOSE_BRACKET, "Expected a ']'.");
+
         return contents;
     }
 
@@ -263,7 +320,7 @@ export class Parser {
         this.advance();
         
         while (!this.isAtEnd()) {
-            if (this.previous().type == TokenType.GLUE) return;
+            if (this.previous().type == TokenType.SEMICOLON) return;
             //   switch (peek().type) {
             //     case CLASS:
             //     case FUN:
