@@ -66,4 +66,4 @@ function run(source: string, outputlex?: boolean) {
 }
 
 runPrompt();
-// run('/*abc/**/ab*/')
+// run('1 abc')

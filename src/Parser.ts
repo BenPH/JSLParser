@@ -2,12 +2,13 @@ import { Token, TokenType } from "./Token";
 import {
     Expr,
     Binary,
-    Unary,
+    PreUnary,
     Literal,
     Grouping,
     Variable,
     Assign,
-    Logical
+    Logical,
+    PostUnary
 } from './expr';
 import {printParseError} from './index'
 
@@ -116,33 +117,42 @@ export class Parser {
     }
     
     private factor(): Expr {
-        let expr = this.unary();
+        let expr = this.preUnary();
         
         while (this.match(TokenType.MUL, TokenType.EMUL,
                             TokenType.DIV, TokenType.EDIV)) {
             const operator = this.previous();
-            const right = this.unary();
+            const right = this.preUnary();
             expr = new Binary(expr, operator, right);
         }
         return expr;
     }
 
-    private unary(): Expr {
+    private preUnary(): Expr {
         if (this.match(TokenType.NOT, TokenType.MINUS)) {
             const operator = this.previous();
-            const right = this.unary();
-            return new Unary(operator, right);
+            const right = this.preUnary();
+            return new PreUnary(operator, right);
         }
         return this.power();
     }
 
     private power(): Expr {
-        const expr = this.primary();
+        const expr = this.postUnary();
         
         if (this.match(TokenType.POWER)) {
             const operator = this.previous();
             const right = this.power();
             return new Binary(expr, operator, right);
+        }
+        return expr;
+    }
+
+    private postUnary(): Expr {
+        let expr = this.primary();
+        while (this.match(TokenType.INC, TokenType.DEC)) {
+            const operator = this.previous();
+            expr = new PostUnary(expr, operator);
         }
         return expr;
     }

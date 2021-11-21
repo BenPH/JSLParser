@@ -10,7 +10,8 @@ export interface ExprVisitor<T> {
     visitGroupingExpr(expr: Grouping): T
     visitLiteralExpr(expr: Literal): T
     visitLogicalExpr(expr: Logical): T
-    visitUnaryExpr(expr: Unary): T
+    visitPostUnaryExpr(expr: PostUnary): T
+    visitPreUnaryExpr(expr: PreUnary): T
     visitVariableExpr(expr: Variable): T
 }
 
@@ -70,14 +71,25 @@ export class Logical implements Expr {
     }
 }
 
-export class Unary implements Expr {
+export class PostUnary implements Expr {
+    constructor(
+        readonly expression: Expr,
+        readonly operator: Token
+    ) { }
+
+    accept<T>(visitor: ExprVisitor<T>): T {
+        return visitor.visitPostUnaryExpr(this)
+    }
+}
+
+export class PreUnary implements Expr {
     constructor(
         readonly operator: Token,
         readonly expression: Expr
     ) { }
 
     accept<T>(visitor: ExprVisitor<T>): T {
-        return visitor.visitUnaryExpr(this)
+        return visitor.visitPreUnaryExpr(this)
     }
 }
 
