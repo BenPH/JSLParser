@@ -40,7 +40,7 @@ export class Parser {
     }
 
     private assignment(): Expr {
-        const expr = this.comparison();
+        const expr = this.logical();
 
         if (this.match(TokenType.ASSIGN,
                         TokenType.ADD_TO,
@@ -59,6 +59,18 @@ export class Parser {
             this.error(equals, "Invalid assignment target.");
         }
 
+        return expr;
+    }
+
+    private logical(): Expr {
+        let expr = this.comparison();
+        
+        while (this.match(TokenType.AND, TokenType.OR)) {
+            const operator = this.previous();
+            const right = this.comparison();
+            expr = new Binary(expr, operator, right);
+        }
+        
         return expr;
     }
 
@@ -106,7 +118,8 @@ export class Parser {
     private factor(): Expr {
         let expr = this.unary();
         
-        while (this.match(TokenType.MUL, TokenType.DIV)) {
+        while (this.match(TokenType.MUL, TokenType.EMUL,
+                            TokenType.DIV, TokenType.EDIV)) {
             const operator = this.previous();
             const right = this.unary();
             expr = new Binary(expr, operator, right);
@@ -122,7 +135,7 @@ export class Parser {
         }
         return this.primary();
     }
-    
+
     private primary(): Expr {
         if (this.match(TokenType.NUMBER, TokenType.STRING)) {
             return new Literal(this.previous().literal);
