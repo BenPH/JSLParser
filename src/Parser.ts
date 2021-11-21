@@ -164,12 +164,21 @@ export class Parser {
     }
 
     private postUnary(): Expr {
-        let expr = this.scopedBinary();
+        let expr = this.scopedUnary();
         while (this.match(TokenType.INC, TokenType.DEC)) {
             const operator = this.previous();
             expr = new PostUnary(expr, operator);
         }
         return expr;
+    }
+
+    private scopedUnary(): Expr {
+        if (this.match(TokenType.COLON, TokenType.DOUBLE_COLON, TokenType.TRIPLE_COLON)) {
+            const operator = this.previous();
+            const right = this.scopedBinary();
+            return new PreUnary(operator, right);
+        }
+        return this.scopedBinary();
     }
 
     private scopedBinary(): Expr {
