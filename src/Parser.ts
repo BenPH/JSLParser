@@ -33,7 +33,8 @@ export class Parser {
             return null;
         }
     }
-    
+
+    // Productions are ordered from low to high precedence
     private expression() {
         return this.assignment();
     }
@@ -62,7 +63,7 @@ export class Parser {
     }
 
     private comparison(): Expr {
-        let expr = this.term();
+        let expr = this.miscBinary();
         
         while (this.match(TokenType.NOT_EQUAL,
                             TokenType.EQUAL,
@@ -71,13 +72,26 @@ export class Parser {
                             TokenType.LESS,
                             TokenType.LESS_EQUAL)) {
             const operator = this.previous();
-            const right = this.term();
+            const right = this.miscBinary();
             expr = new Binary(expr, operator, right);
         }
         
         return expr;
     }
-    
+
+    // ||, |/, ::, <<
+    private miscBinary(): Expr {
+        let expr = this.term();
+        
+        while (this.match(TokenType.CONCAT, TokenType.VCONCAT,
+                            TokenType.DOUBLE_COLON, TokenType.SEND)) {
+            const operator = this.previous();
+            const right = this.term();
+            expr = new Binary(expr, operator, right);
+        }
+        return expr;
+    }
+
     private term(): Expr {
         let expr = this.factor();
         
