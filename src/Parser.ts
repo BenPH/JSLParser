@@ -68,11 +68,7 @@ export class Parser {
             const operator = this.previous();
             const value = this.assignment();
 
-            if (expr instanceof Variable) { // TODO: Probably disable for CST
-                return new Assign(expr, operator, value);
-            }
-
-            this.error(operator, "Invalid assignment target.");
+            return new Binary(expr, operator, value);
         }
 
         return expr;
