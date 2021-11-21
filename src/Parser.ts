@@ -49,14 +49,14 @@ export class Parser {
                         TokenType.DIV_TO,
                         TokenType.CONCAT_TO,
                         TokenType.VCONCAT_TO)) {
-            const equals = this.previous();
+            const operator = this.previous();
             const value = this.assignment();
 
             if (expr instanceof Variable) {
-                return new Assign(expr, equals, value);
+                return new Assign(expr, operator, value);
             }
 
-            this.error(equals, "Invalid assignment target.");
+            this.error(operator, "Invalid assignment target.");
         }
 
         return expr;
@@ -126,14 +126,25 @@ export class Parser {
         }
         return expr;
     }
-    
+
     private unary(): Expr {
         if (this.match(TokenType.NOT, TokenType.MINUS)) {
             const operator = this.previous();
             const right = this.unary();
             return new Unary(operator, right);
         }
-        return this.primary();
+        return this.power();
+    }
+
+    private power(): Expr {
+        const expr = this.primary();
+        
+        if (this.match(TokenType.POWER)) {
+            const operator = this.previous();
+            const right = this.power();
+            return new Binary(expr, operator, right);
+        }
+        return expr;
     }
 
     private primary(): Expr {
