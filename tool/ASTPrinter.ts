@@ -56,7 +56,11 @@ export default class AstPrinter implements ExprVisitor<string> {
   }
 
   parenthesize(name: string, exprs: Expr[]): string {
-    const printedExprs = exprs.map((e) => e.accept<string>(this)).join(' ');
+    let printedExprs: string;
+    if (!exprs.length)
+      printedExprs = '()'
+    else
+      printedExprs = exprs.map((e) => e.accept<string>(this)).join(' ');
 
     return `(${name} ${printedExprs})`;
   }
