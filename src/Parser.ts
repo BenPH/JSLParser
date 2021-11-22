@@ -214,6 +214,7 @@ export class Parser {
         if (this.match(TokenType.OPEN_BRACKET)) {
             // lookahead two
             const rewind = this.current;
+            // TODO: +2, -2. Make a production.
             if (this.match(TokenType.STRING, TokenType.NUMBER) && this.match(TokenType.ARROW)) {
                 this.current = rewind;
                 return new AssociativeArray(this.associativeArray());
@@ -317,11 +318,18 @@ export class Parser {
     }
 
     private keyValue(): [Literal, Expr] {
-        if(!this.match(TokenType.STRING, TokenType.NUMBER))
-            throw this.error(this.peek(), "Literal associative arrays ([=>]) can only have a string or nu numbers as keys.");
-        const key = new Literal(this.previous().literal);
-        this.consume(TokenType.ARROW, "expected a '=>'.");
-        const val = this.expression();
+        // TODO: +2, -2. Make a production.
+        let key: Literal, val: Expr;
+        if(this.match(TokenType.STRING, TokenType.NUMBER)) {
+            key = new Literal(this.previous().literal);
+            this.consume(TokenType.ARROW, "expected a '=>'.");
+            val = this.expression();
+        } else if (this.match(TokenType.ARROW)) {
+            key = new Literal("DEFAULT");
+            val = this.expression();
+        } else {
+            throw this.error(this.peek(), "Invalid token in associative array. Literal associative arrays ([=>]) can only have a string or numbers as keys.");
+        }
         return [key, val]
     }
 
