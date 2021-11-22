@@ -24,6 +24,7 @@ export default class AstPrinter implements ExprVisitor<string> {
     expr.contents.forEach((val, key) => str += key.accept<string>(this) + ' => ' + val.accept<string>(this) + ', ');
     str = str.replace(/, $/, "");
     str += ']';
+    if (str == '[]') str = '[=>]'
     return str;
   }
 

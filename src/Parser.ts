@@ -215,7 +215,12 @@ export class Parser {
             // lookahead two
             const rewind = this.current;
             // TODO: +2, -2. Make a production.
-            if (this.match(TokenType.STRING, TokenType.NUMBER) && this.match(TokenType.ARROW)) {
+            if (this.match(TokenType.ARROW)) {
+                if (this.match(TokenType.CLOSE_BRACKET))
+                    return new AssociativeArray(new Map<Literal, Expr>()); // Empty [=>]
+                this.current = rewind;
+                return new AssociativeArray(this.associativeArray()); // Starts with default [=>2,...]
+            } else if (this.current = rewind, this.match(TokenType.STRING, TokenType.NUMBER) && this.match(TokenType.ARROW)) {
                 this.current = rewind;
                 return new AssociativeArray(this.associativeArray());
             } else {
@@ -306,7 +311,17 @@ export class Parser {
         const contents = new Map<Literal, Expr>();
         while(!this.check(TokenType.CLOSE_BRACKET) && !this.isAtEnd()) {
             let k: Literal, v: Expr;
-            [k, v] = this.keyValue();
+            if (this.check(TokenType.STRING) || this.check(TokenType.NUMBER)) {
+                [k, v] = this.keyValue();
+            } else if (this.check(TokenType.ARROW)) {
+                // TODO: Defaults aren't allowed everywhere.
+                // The pattern seems very inconsistent though.
+                // Defaults come after key=>val s should be good enough
+                v = this.defaultValue();
+                k = new Literal(undefined);
+            } else {
+                throw this.error(this.peek(), "Invalid token in associative array. Literal associative arrays ([=>]) can only have strings or numbers as keys.");
+            }
             contents.set(k, v);
             if (!this.check(TokenType.CLOSE_BRACKET))
                 this.consume(TokenType.COMMA, "expected a ',' or ']'.");
@@ -319,18 +334,19 @@ export class Parser {
 
     private keyValue(): [Literal, Expr] {
         // TODO: +2, -2. Make a production.
-        let key: Literal, val: Expr;
         if(this.match(TokenType.STRING, TokenType.NUMBER)) {
-            key = new Literal(this.previous().literal);
+            const key = new Literal(this.previous().literal);
             this.consume(TokenType.ARROW, "expected a '=>'.");
-            val = this.expression();
-        } else if (this.match(TokenType.ARROW)) {
-            key = new Literal("DEFAULT");
-            val = this.expression();
+            const val = this.expression();
+            return [key, val]
         } else {
-            throw this.error(this.peek(), "Invalid token in associative array. Literal associative arrays ([=>]) can only have a string or numbers as keys.");
+            throw this.error(this.peek(), "Invalid token in associative array. Literal associative arrays ([=>]) can only have strings or numbers as keys.");
         }
-        return [key, val]
+    }
+
+    private defaultValue(): Expr {
+        this.consume(TokenType.ARROW, "Expected a '=>'.");
+        return this.expression();
     }
 
     private match(...types: TokenType[]): boolean {
