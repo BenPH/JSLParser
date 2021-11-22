@@ -38,7 +38,7 @@ export class Lexer {
             case '`': this.addToken(TokenType.BACK_QUOTE); break;
             case '&': this.addToken(TokenType.AND); break;
             case '|': {
-                const next = this.lookahead(1);
+                const next = this.peek();
                 switch (next) {
                     case '|': this.advance(); this.addToken(this.match('=') ? TokenType.CONCAT_TO : TokenType.CONCAT); break;
                     case '/': this.advance(); this.addToken(this.match('=') ? TokenType.VCONCAT_TO : TokenType.VCONCAT); break;
@@ -47,7 +47,7 @@ export class Lexer {
                 break;
             }
             case ':': {
-                const next = this.lookahead(1);
+                const next = this.peek();
                 switch (next) {
                     case '/': this.advance(); this.addToken(TokenType.EDIV); break;
                     case '*': this.advance(); this.addToken(TokenType.EMUL); break;
@@ -57,7 +57,7 @@ export class Lexer {
                 break;
             }
             case '+': {
-                const next = this.lookahead(1);
+                const next = this.peek();
                 switch(next) {
                     case '+': this.advance(); this.addToken(TokenType.INC); break;
                     case '=': this.advance(); this.addToken(TokenType.ADD_TO); break;
@@ -66,7 +66,7 @@ export class Lexer {
                 break;
             }
             case '-': {
-                const next = this.lookahead(1);
+                const next = this.peek();
                 switch(next) {
                     case '-': this.advance(); this.addToken(TokenType.DEC); break;
                     case '=': this.advance(); this.addToken(TokenType.SUBTRACT_TO); break;
@@ -81,7 +81,7 @@ export class Lexer {
                 this.addToken(this.match('=') ? TokenType.NOT_EQUAL : TokenType.NOT);
                 break;
             case '=':{
-                const next = this.lookahead(1);
+                const next = this.peek();
                 switch(next) {
                     case '=': this.advance(); this.addToken(TokenType.EQUAL); break;
                     case '>': this.advance(); this.addToken(TokenType.ARROW); break;
@@ -90,7 +90,7 @@ export class Lexer {
                 break;
             }
             case '<': {
-                const next = this.lookahead(1);
+                const next = this.peek();
                 switch(next) {
                     case '=': this.advance(); this.addToken(TokenType.LESS_EQUAL); break;
                     case '<': this.advance(); this.addToken(TokenType.SEND); break;
@@ -99,7 +99,7 @@ export class Lexer {
                 break;
             }
             case '>': {
-                const next = this.lookahead(1);
+                const next = this.peek();
                 switch(next) {
                     case '=': this.advance(); this.addToken(TokenType.GREATER_EQUAL); break;
                     case '>': this.advance(); this.addToken(TokenType.PAT_IMMEDIATE); break;
@@ -111,7 +111,7 @@ export class Lexer {
             case '/':
                 if (this.match('/')) {
                     // A comment goes until the end of the line.
-                    while (this.lookahead(1) != '\n' && !this.isAtEnd()) this.advance();
+                    while (this.peek() != '\n' && !this.isAtEnd()) this.advance();
                 } else if (this.match('*')) {
                     this.blockComment();
                 } else {
@@ -141,14 +141,14 @@ export class Lexer {
     }
 
     private stringOrName(): void {
-        while (this.lookahead(1) != '"' && !this.isAtEnd()) {
-          if (this.lookahead(1) == '\\' && this.lookahead(2) == '!' && this.lookahead(3) == '"') {
+        while (this.peek() != '"' && !this.isAtEnd()) {
+          if (this.peek() == '\\' && this.lookahead(1) == '!' && this.lookahead(2) == '"') {
                 this.advance(2);
-          } else if (this.lookahead(1) == '\\' && this.lookahead(2) == '[') {
+          } else if (this.peek() == '\\' && this.lookahead(1) == '[') {
                 this.advance(2);
                 this._rawString();
           }
-          if (this.lookahead(1) == '\n') this.line++;
+          if (this.peek() == '\n') this.line++;
           this.advance();
         }
 
@@ -157,7 +157,7 @@ export class Lexer {
           return;
         }
 
-        if (this.lookahead(2) == 'n') {
+        if (this.lookahead(1) == 'n') {
             this.advance(2); // Closing "n
             this.addToken(TokenType.NAME)
         } else {
@@ -172,21 +172,21 @@ export class Lexer {
     }
 
     private _rawString(): void {
-        while (!(this.lookahead(1) == ']' && this.lookahead(2) == '\\') && !this.isAtEnd()) {
-            if (this.lookahead(1) == '\n') this.line++;
+        while (!(this.peek() == ']' && this.lookahead(1) == '\\') && !this.isAtEnd()) {
+            if (this.peek() == '\n') this.line++;
             this.advance();
         }
         if (!this.isAtEnd()) this.advance();
     }
 
     private number(): void {
-        while (this.isDigit(this.lookahead(1))) this.advance();
+        while (this.isDigit(this.peek())) this.advance();
 
-        if (this.lookahead(1) == '.') {
+        if (this.peek() == '.') {
             this.advance();
             this.decimal();
         } else {
-            if(this.lookahead(1).toLowerCase() == 'e') {
+            if(this.peek().toLowerCase() == 'e') {
                 this._exponent();
             } 
             this.addToken(TokenType.NUMBER,
@@ -195,9 +195,9 @@ export class Lexer {
     }
 
     private decimal(): void {
-        while (this.isDigit(this.lookahead(1))) this.advance();
+        while (this.isDigit(this.peek())) this.advance();
 
-        if (this.lookahead(1).toLowerCase() == 'e') {
+        if (this.peek().toLowerCase() == 'e') {
             this._exponent();
         }
         this.addToken(TokenType.NUMBER,
@@ -206,13 +206,13 @@ export class Lexer {
 
     private _exponent(): void {
         this.advance()
-        if((this.lookahead(1) == '+' || this.lookahead(1) == '-'))
+        if((this.peek() == '+' || this.peek() == '-'))
             this.advance();
-        if(!this.isDigit(this.lookahead(1))) {
+        if(!this.isDigit(this.peek())) {
             report(this.line, "", "Invalid numeric literal '" + this.source.substring(this.start, this.current) + "'");
             return;
         }
-        while (this.isDigit(this.lookahead(1))) this.advance();
+        while (this.isDigit(this.peek())) this.advance();
     }
 
     private _tryDate(): boolean {
@@ -226,18 +226,18 @@ export class Lexer {
     }
 
     private name(): void {
-        while (this.isNameContinue(this.lookahead(1))) this.advance();
+        while (this.isNameContinue(this.peek())) this.advance();
 
         this.addToken(TokenType.NAME);
     }
 
     private blockComment(): void {
-        while (!(this.lookahead(1) == '*' && this.lookahead(2) == '/') && !this.isAtEnd()) {
-            if (this.lookahead(1) == '/' && this.lookahead(2) == '*') {
+        while (!(this.peek() == '*' && this.lookahead(1) == '/') && !this.isAtEnd()) {
+            if (this.peek() == '/' && this.lookahead(1) == '*') {
                 this.advance(2);
                 this.blockComment();
             } else {
-                if (this.lookahead(1) == '\n') this.line++;
+                if (this.peek() == '\n') this.line++;
                 this.advance();
             }
         }
@@ -251,9 +251,13 @@ export class Lexer {
         return true;
     }
 
+    private peek(): string {
+        return this.source.charAt(this.current);
+    }
+
     private lookahead(n: number): string {
-        if (this.current + n - 1 >= this.source.length) return '\0';
-        return this.source.charAt(this.current + n - 1);
+        if (this.current + n >= this.source.length) return '\0';
+        return this.source.charAt(this.current + n);
     }
 
     private isNameStart(c: string): boolean {
