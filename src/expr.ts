@@ -4,6 +4,7 @@ import { Token, Literal as LiteralValue } from "./Token"
 
 export interface ExprVisitor<T> {
     visitAssignExpr(expr: Assign): T
+    visitAssociativeArrayExpr(expr: AssociativeArray): T
     visitBinaryExpr(expr: Binary): T
     // visitCallExpr(expr: Call): T
     // visitGetExpr(expr: Get): T
@@ -30,6 +31,15 @@ export class Assign implements Expr {
 
     accept<T>(visitor: ExprVisitor<T>): T {
         return visitor.visitAssignExpr(this)
+    }
+}
+
+
+export class AssociativeArray implements Expr {
+    constructor(readonly contents: Map<Literal, Expr>) {}
+
+    accept<T>(visitor: ExprVisitor<T>): T {
+        return visitor.visitAssociativeArrayExpr(this)
     }
 }
 

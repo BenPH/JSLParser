@@ -12,7 +12,8 @@ import {
     LiteralNumeric,
     LiteralString,
     List,
-    Matrix
+    Matrix,
+    AssociativeArray
 } from './expr';
 import {printParseError} from './index'
 
@@ -207,23 +208,31 @@ export class Parser {
         }
         
         if (this.match(TokenType.OPEN_BRACE)) {
-            return new List(this.listContents());
+            return new List(this.list());
         }
 
         if (this.match(TokenType.OPEN_BRACKET)) {
-            return new Matrix(this.matrixContents())
+            // lookahead two
+            const rewind = this.current;
+            if (this.match(TokenType.STRING, TokenType.NUMBER) && this.match(TokenType.ARROW)) {
+                this.current = rewind;
+                return new AssociativeArray(this.associativeArray());
+            } else {
+                this.current = rewind;
+                return new Matrix(this.matrix());
+            }
         }
 
         if (this.match(TokenType.OPEN_PAREN)) {
             const expr = this.expression();
-            this.consume(TokenType.CLOSE_PAREN, "Expected ')' after expression.");
+            this.consume(TokenType.CLOSE_PAREN, "Expected a ')' after expression.");
             return new Grouping(expr);
         }
         
         throw this.error(this.peek(), "Expected an expression.");
     }
 
-    private listContents(): Expr[] {
+    private list(): Expr[] {
         const contents: Expr[] = []
         while(this.match(TokenType.COMMA)) continue; // allow multiple commas at start
         while(!this.check(TokenType.CLOSE_BRACE) && !this.isAtEnd()) {
@@ -240,7 +249,7 @@ export class Parser {
         return contents;
     }
 
-    private matrixContents(): LiteralNumeric[][] {
+    private matrix(): LiteralNumeric[][] {
         const contents: LiteralNumeric[][] = [];
         let rowLength;
         let row: LiteralNumeric[];
@@ -290,6 +299,30 @@ export class Parser {
         this.consume(TokenType.CLOSE_BRACKET, "Expected a ']'.");
 
         return contents;
+    }
+
+    private associativeArray(): Map<Literal, Expr> {
+        const contents = new Map<Literal, Expr>();
+        while(!this.check(TokenType.CLOSE_BRACKET) && !this.isAtEnd()) {
+            let k: Literal, v: Expr;
+            [k, v] = this.keyValue();
+            contents.set(k, v);
+            if (!this.check(TokenType.CLOSE_BRACKET))
+                this.consume(TokenType.COMMA, "expected a ',' or ']'.");
+        }
+        if(this.previous().type == TokenType.COMMA)
+            throw this.error(this.previous(), "Unexpected ',' at end of associative array."); // TODO: Maybe don't need to `throw` here. Automatic resync?
+        this.consume(TokenType.CLOSE_BRACKET, "expected a ']'.");
+        return contents;
+    }
+
+    private keyValue(): [Literal, Expr] {
+        if(!this.match(TokenType.STRING, TokenType.NUMBER))
+            throw this.error(this.peek(), "Literal associative arrays ([=>]) can only have a string or nu numbers as keys.");
+        const key = new Literal(this.previous().literal);
+        this.consume(TokenType.ARROW, "expected a '=>'.");
+        const val = this.expression();
+        return [key, val]
     }
 
     private match(...types: TokenType[]): boolean {
