@@ -212,19 +212,13 @@ export class Parser {
         }
 
         if (this.match(TokenType.OPEN_BRACKET)) {
-            // lookahead two
-            const rewind = this.current;
-            // TODO: +2, -2. Make a production.
-            if (this.match(TokenType.ARROW)) {
-                if (this.match(TokenType.CLOSE_BRACKET))
-                    return new AssociativeArray(new Map<Literal, Expr>()); // Empty [=>]
-                this.current = rewind;
-                return new AssociativeArray(this.associativeArray()); // Starts with default [=>2,...]
-            } else if (this.current = rewind, this.match(TokenType.STRING, TokenType.NUMBER) && this.match(TokenType.ARROW)) {
-                this.current = rewind;
+            // lookahead two for arrow operator
+            if (!this.check(TokenType.CLOSE_BRACKET) && 
+                (this.check(TokenType.ARROW) || 
+                this.lookahead(1).type == TokenType.ARROW || 
+                this.lookahead(2).type == TokenType.ARROW)) {
                 return new AssociativeArray(this.associativeArray());
             } else {
-                this.current = rewind;
                 return new Matrix(this.matrix());
             }
         }
@@ -268,16 +262,7 @@ export class Parser {
 
                 // TODO: Technically a space separated + or - is allowed on it's own
                 // representing +1, -1, but...
-                let sign = 1;
-                if (this.match(TokenType.MINUS)) {
-                    sign = -1;
-                } else if (this.match(TokenType.PLUS)) {
-                    sign = 1;
-                }
-                const numToken = this.consume(TokenType.NUMBER, "Invalid matrix token. Only numeric literals can be used.");
-                let num = numToken.literal;
-                if (!num) num = NaN;
-                row.push(new LiteralNumeric(sign * (num as number)));
+                row.push(this.numericLiteral());
             }
 
             if (this.previous().type == TokenType.SEMICOLON) {
@@ -309,19 +294,14 @@ export class Parser {
 
     private associativeArray(): Map<Literal, Expr> {
         const contents = new Map<Literal, Expr>();
+        if (this.check(TokenType.ARROW) && this.lookahead(1).type == TokenType.CLOSE_BRACKET) {
+            this.advance();
+            this.advance();
+            return contents;
+        }
         while(!this.check(TokenType.CLOSE_BRACKET) && !this.isAtEnd()) {
             let k: Literal, v: Expr;
-            if (this.check(TokenType.STRING) || this.check(TokenType.NUMBER)) {
-                [k, v] = this.keyValue();
-            } else if (this.check(TokenType.ARROW)) {
-                // TODO: Defaults aren't allowed everywhere.
-                // The pattern seems very inconsistent though.
-                // Defaults come after key=>val s should be good enough
-                v = this.defaultValue();
-                k = new Literal(undefined);
-            } else {
-                throw this.error(this.peek(), "Invalid token in associative array. Literal associative arrays ([=>]) can only have strings or numbers as keys.");
-            }
+            [k, v] = this.keyValue();
             contents.set(k, v);
             if (!this.check(TokenType.CLOSE_BRACKET))
                 this.consume(TokenType.COMMA, "expected a ',' or ']'.");
@@ -333,20 +313,33 @@ export class Parser {
     }
 
     private keyValue(): [Literal, Expr] {
-        // TODO: +2, -2. Make a production.
-        if(this.match(TokenType.STRING, TokenType.NUMBER)) {
-            const key = new Literal(this.previous().literal);
-            this.consume(TokenType.ARROW, "expected a '=>'.");
-            const val = this.expression();
-            return [key, val]
+        let key;
+        if (this.check(TokenType.PLUS) || this.check(TokenType.MINUS)) {
+            key = this.numericLiteral();
+        } else if(this.match(TokenType.STRING, TokenType.NUMBER)) {
+            key = new Literal(this.previous().literal);
+        } else if (this.check(TokenType.ARROW)) {
+            // TODO: Defaults aren't allowed everywhere.
+            key = new Literal(undefined);
         } else {
             throw this.error(this.peek(), "Invalid token in associative array. Literal associative arrays ([=>]) can only have strings or numbers as keys.");
         }
+        this.consume(TokenType.ARROW, "expected a '=>'.");
+        const val = this.expression();
+        return [key, val]
     }
 
-    private defaultValue(): Expr {
-        this.consume(TokenType.ARROW, "Expected a '=>'.");
-        return this.expression();
+    private numericLiteral(msg = ""): LiteralNumeric {
+        let sign = 1;
+        if (this.match(TokenType.MINUS)) {
+            sign = -1;
+        } else if (this.match(TokenType.PLUS)) {
+            sign = 1;
+        }
+        const numToken = this.consume(TokenType.NUMBER, "Invalid matrix token. Only numeric literals can be used.");
+        let num = numToken.literal;
+        if (!num) num = NaN;
+        return new LiteralNumeric(sign * (num as number));
     }
 
     private match(...types: TokenType[]): boolean {
@@ -409,6 +402,13 @@ export class Parser {
     
     private peek(): Token {
         return this.tokens[this.current];
+    }
+
+    // Lookahead. Should not use to check EOF.
+    private lookahead(n: number): Token {
+        if (this.current + n >= this.tokens.length)
+            return this.tokens[this.tokens.length]; // EOF
+        return this.tokens[this.current + n];
     }
     
     private previous(): Token {
