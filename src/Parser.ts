@@ -83,7 +83,8 @@ export class Parser {
         while (this.match(TokenType.AND, TokenType.OR)) {
             const operator = this.previous();
             const right = this.comparison();
-            expr = new Binary(expr, operator, right);
+            // Logical, not Binary since short-circuiting can apply
+            expr = new Logical(expr, operator, right);
         }
         
         return expr;
