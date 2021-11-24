@@ -7,8 +7,8 @@ export interface ExprVisitor<T> {
     visitAssociativeArrayExpr(expr: AssociativeArray): T
     visitBinaryExpr(expr: Binary): T
     visitCallExpr(expr: Call): T
-    // visitGetExpr(expr: Get): T
     visitGroupingExpr(expr: Grouping): T
+    visitIndexExpr(expr: Index): T
     visitListExpr(expr: List): T
     visitLiteralExpr(expr: Literal): T
     visitLogicalExpr(expr: Logical): T
@@ -58,7 +58,7 @@ export class Binary implements Expr {
 export class Call implements Expr {
     constructor(
         readonly callee: Expr,
-        readonly paren: Token,
+        readonly paren: Token, // Store the closing parenthesis for better errors?
         readonly args: Expr[]
     ) {}
 
@@ -72,6 +72,14 @@ export class Grouping implements Expr {
 
     accept<T>(visitor: ExprVisitor<T>): T {
         return visitor.visitGroupingExpr(this)
+    }
+}
+
+export class Index implements Expr {
+    constructor(readonly expression: Expr, readonly indices: Expr[]) {}
+
+    accept<T>(visitor: ExprVisitor<T>): T {
+         return visitor.visitIndexExpr(this)
     }
 }
 

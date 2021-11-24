@@ -14,7 +14,8 @@ import {
     List,
     Matrix,
     AssociativeArray,
-    Call
+    Call,
+    Index
 } from './expr';
 import {printParseError} from './index'
 
@@ -166,7 +167,7 @@ export class Parser {
     }
 
     private postUnary(): Expr {
-        let expr = this.call();
+        let expr = this.callOrIndex();
         while (this.match(TokenType.INC, TokenType.DEC, TokenType.BACK_QUOTE)) {
             const operator = this.previous();
             expr = new PostUnary(expr, operator);
@@ -174,12 +175,14 @@ export class Parser {
         return expr;
     }
 
-    private call(): Expr {
+    private callOrIndex(): Expr {
         let expr = this.scopedUnary();
 
         while (true) { 
-            if (this. match(TokenType.OPEN_PAREN)) {
+            if (this.match(TokenType.OPEN_PAREN)) {
                 expr = this.finishCall(expr);
+            } else if(this.match(TokenType.OPEN_BRACKET)) {
+                expr = this.finishIndex(expr);
             } else {
                 break;
             }
@@ -259,6 +262,19 @@ export class Parser {
         }
         const paren = this.consume(TokenType.CLOSE_PAREN, "Expected a ')' after arguments.");
         return new Call(callee, paren, args);
+    }
+
+    private finishIndex(expr: Expr): Expr {
+        const indices: Expr[] = [];
+        if (!this.check(TokenType.CLOSE_BRACKET)) {
+            indices.push(this.expression());
+            if (this.match(TokenType.COMMA))
+                indices.push(this.expression());
+        }
+        if (this.match(TokenType.COMMA))
+            throw this.error(this.previous(), "Can only index with up to two indices.")
+        this.consume(TokenType.CLOSE_BRACKET, "Expected a ']'");
+        return new Index(expr, indices);
     }
 
     private list(): Expr[] {
