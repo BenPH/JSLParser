@@ -111,8 +111,13 @@ export class Parser {
 
     // ||, |/, ::, <<
     private miscBinary(): Expr {
+        // SEND Doesn't need a left
+        if (this.match(TokenType.SEND)) {;
+            const operator = this.previous();
+            const right = this.term();
+            return new PreUnary(operator, right);
+        }
         let expr = this.term();
-        
         while (this.match(TokenType.CONCAT, TokenType.VCONCAT,
                             TokenType.DOUBLE_COLON, TokenType.SEND)) {
             const operator = this.previous();
