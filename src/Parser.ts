@@ -124,7 +124,7 @@ export class Parser {
         // SEND Doesn't need a left
         if (this.match(TokenType.SEND)) {;
             const operator = this.previous();
-            const right = this.term();
+            const right = this.miscBinary();
             return new PreUnary(operator, right);
         }
         let expr = this.term();
