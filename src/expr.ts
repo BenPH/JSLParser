@@ -7,6 +7,7 @@ export interface ExprVisitor<T> {
     visitAssociativeArrayExpr(expr: AssociativeArray): T
     visitBinaryExpr(expr: Binary): T
     visitCallExpr(expr: Call): T
+    visitGlueExpr(expr: Glue): T
     visitGroupingExpr(expr: Grouping): T
     visitIndexExpr(expr: Index): T
     visitListExpr(expr: List): T
@@ -64,6 +65,14 @@ export class Call implements Expr {
 
     accept<T>(visitor: ExprVisitor<T>): T {
          return visitor.visitCallExpr(this)
+    }
+}
+
+export class Glue implements Expr {
+    constructor(readonly expressions: Expr[]) {}
+
+    accept<T>(visitor: ExprVisitor<T>): T {
+        return visitor.visitGlueExpr(this)
     }
 }
 

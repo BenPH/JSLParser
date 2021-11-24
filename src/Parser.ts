@@ -15,7 +15,8 @@ import {
     Matrix,
     AssociativeArray,
     Call,
-    Index
+    Index,
+    Glue
 } from './expr';
 import {printParseError} from './index'
 
@@ -48,16 +49,24 @@ export class Parser {
     }
 
     private glue() {
-        // Consume GLUE 
-        // while (this.match(TokenType.GLUE)) continue;
-
-        let expr = this.assignment();
-        while (this.match(TokenType.SEMICOLON)) {
-            const operator = this.previous();
-            const right = this.glue();
-            expr = new Binary(expr, operator, right);
-        } // TODO: Allow trailing glue
-        return expr;
+        const expressions: Expr[] = [];
+        do {
+            // Consume GLUE
+            while (this.match(TokenType.SEMICOLON)) continue;
+            // Break on ending characters
+            if (this.check(TokenType.CLOSE_BRACKET) ||
+                this.check(TokenType.CLOSE_BRACKET) ||
+                this.check(TokenType.CLOSE_PAREN)   ||
+                this.isAtEnd())
+                break;
+            expressions.push(this.assignment());
+        } while (this.match(TokenType.SEMICOLON))
+        // TODO: Allow trailing semicolon. why is this so hard?
+        if (expressions.length > 1) {
+            return new Glue(expressions);
+        } else {
+            return expressions[0];
+        }
     }
 
     private assignment(): Expr {
