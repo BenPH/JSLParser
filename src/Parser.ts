@@ -55,7 +55,7 @@ export class Parser {
             while (this.match(TokenType.SEMICOLON)) continue;
             // Break on ending characters
             if (this.check(TokenType.CLOSE_BRACKET) ||
-                this.check(TokenType.CLOSE_BRACKET) ||
+                this.check(TokenType.CLOSE_BRACE) ||
                 this.check(TokenType.CLOSE_PAREN)   ||
                 this.check(TokenType.COMMA)   ||
                 this.isAtEnd())
