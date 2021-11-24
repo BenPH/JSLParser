@@ -57,6 +57,7 @@ export class Parser {
             if (this.check(TokenType.CLOSE_BRACKET) ||
                 this.check(TokenType.CLOSE_BRACKET) ||
                 this.check(TokenType.CLOSE_PAREN)   ||
+                this.check(TokenType.COMMA)   ||
                 this.isAtEnd())
                 break;
             expressions.push(this.assignment());
