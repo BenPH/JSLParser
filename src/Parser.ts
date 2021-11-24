@@ -13,7 +13,8 @@ import {
     LiteralString,
     List,
     Matrix,
-    AssociativeArray
+    AssociativeArray,
+    Call
 } from './expr';
 import {printParseError} from './index'
 
@@ -165,10 +166,23 @@ export class Parser {
     }
 
     private postUnary(): Expr {
-        let expr = this.scopedUnary();
+        let expr = this.call();
         while (this.match(TokenType.INC, TokenType.DEC, TokenType.BACK_QUOTE)) {
             const operator = this.previous();
             expr = new PostUnary(expr, operator);
+        }
+        return expr;
+    }
+
+    private call(): Expr {
+        let expr = this.scopedUnary();
+
+        while (true) { 
+            if (this. match(TokenType.OPEN_PAREN)) {
+                expr = this.finishCall(expr);
+            } else {
+                break;
+            }
         }
         return expr;
     }
@@ -231,6 +245,20 @@ export class Parser {
         }
         
         throw this.error(this.peek(), "Expected an expression.");
+    }
+
+    private finishCall(callee: Expr): Expr {
+        const args: Expr[] = [];
+        while(this.match(TokenType.COMMA)) continue; // allow multiple commas at start
+        if (!this.check(TokenType.CLOSE_PAREN)) {
+            do {
+                while(this.match(TokenType.COMMA)) continue; // allow multiple commas inbetween
+                if(!this.check(TokenType.CLOSE_PAREN))
+                    args.push(this.expression());
+            } while (this.match(TokenType.COMMA));
+        }
+        const paren = this.consume(TokenType.CLOSE_PAREN, "Expected a ')' after arguments.");
+        return new Call(callee, paren, args);
     }
 
     private list(): Expr[] {

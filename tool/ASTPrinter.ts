@@ -1,4 +1,4 @@
-import { Expr, ExprVisitor, Literal, PostUnary, PreUnary, Binary, Grouping, Variable, Assign, Logical, List, Matrix, AssociativeArray } from '../src/expr';
+import { Expr, ExprVisitor, Literal, PostUnary, PreUnary, Binary, Grouping, Variable, Assign, Logical, List, Matrix, AssociativeArray, Call } from '../src/expr';
 
 export default class AstPrinter implements ExprVisitor<string> {
 //   visitGetterExpr(expr: Getter): string {
@@ -26,6 +26,10 @@ export default class AstPrinter implements ExprVisitor<string> {
     str += ']';
     if (str == '[]') str = '[=>]'
     return str;
+  }
+
+  visitCallExpr(expr: Call): string {
+    return this.parenthesize(expr.callee.accept<string>(this), [...expr.args])
   }
 
   visitVariableExpr(expr: Variable): string {
