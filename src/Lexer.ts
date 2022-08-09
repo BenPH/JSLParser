@@ -159,14 +159,14 @@ export class Lexer {
 
         if (this.lookahead(1) == 'n') {
             this.advance(2); // Closing "n
-            this.addToken(TokenType.NAME)
+            const name_id = this.source.substring(this.start, this.current).replace(/\s+/g, '');
+            this.addToken(TokenType.NAME, name_id)
         } else {
             // The closing ".
             this.advance();
 
-            // Trim the surrounding quotes.
             // TODO: Replace escaped characters
-            const value = '"' + this.source.substring(this.start + 1, this.current - 1) + '"';
+            const value = this.source.substring(this.start, this.current);
             this.addToken(TokenType.STRING, value);
         }
     }
@@ -228,7 +228,8 @@ export class Lexer {
     private name(): void {
         while (this.isNameContinue(this.peek())) this.advance();
 
-        this.addToken(TokenType.NAME);
+        const name_id = this.source.substring(this.start, this.current).toLowerCase().replace(/\s+/g, '');
+        this.addToken(TokenType.NAME, name_id);
     }
 
     private blockComment(): void {
