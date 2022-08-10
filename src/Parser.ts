@@ -270,6 +270,7 @@ export class Parser {
 
     private finishCall(callee: Expr): Expr {
         const args: Expr[] = [];
+        const callStart = this.previous().startPosition;
         while(this.match(TokenType.COMMA)) continue; // allow multiple commas at start
         if (!this.check(TokenType.CLOSE_PAREN)) {
             do {
@@ -278,7 +279,9 @@ export class Parser {
                     args.push(this.expression());
             } while (this.match(TokenType.COMMA));
         }
-        const paren = this.consume(TokenType.CLOSE_PAREN, "Expected a ')' after arguments.");
+        
+        const paren = this.consume(TokenType.CLOSE_PAREN, 
+            "Expected a ')' after arguments of call starting at line " + callStart.line + ", col " + callStart.col);
         return new Call(callee, paren, args);
     }
 
