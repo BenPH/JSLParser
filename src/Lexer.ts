@@ -289,7 +289,8 @@ export class Lexer {
     }
 
     private addToken(type: TokenType, literal?: Literal): void {
-        const text = this.source.substring(this.start, this.current);
+        // Trim the end of whitespace for identifiers. No other token should have whitespace.
+        const text = this.source.substring(this.start, this.current).trimEnd();
         this.tokens.push(new Token(type, text, literal, this.line));
     }
 }
