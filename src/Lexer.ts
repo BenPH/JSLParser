@@ -7,7 +7,7 @@ export class Lexer {
     private start = 0;
     private current = 0;
     private line = 1;
-    private col = 1;
+    private endCol = 1;
 
     constructor(source: string) {
         this.source = source;
@@ -20,7 +20,7 @@ export class Lexer {
           this.scanToken();
         }
 
-        this.tokens.push(new Token(TokenType.EOF, "", undefined, this.line, this.col));
+        this.tokens.push(new Token(TokenType.EOF, "", undefined, this.line, this.endCol));
         return this.tokens;
     }
 
@@ -135,7 +135,7 @@ export class Lexer {
                 } else if (this.isNameStart(c)){
                     this.name();
                 } else {
-                    report(this.line, this.col, "", "Unexpected character '" + c + "'");
+                    report(this.line, this.getStartCol(), "", "Unexpected character '" + c + "'");
                 }
                 break;
         }
@@ -155,7 +155,7 @@ export class Lexer {
         }
 
         if (this.isAtEnd()) {
-          report(this.line, this.col, "", "Unterminated string.");
+          report(this.line, this.getStartCol(), "", "Unterminated string.");
           return;
         }
 
@@ -212,7 +212,7 @@ export class Lexer {
         if((this.peek() == '+' || this.peek() == '-'))
             this.advance();
         if(!this.isDigit(this.peek())) {
-            report(this.line, this.col, "", "Invalid numeric literal '" + this.source.substring(this.start, this.current) + "'");
+            report(this.line, this.getStartCol(), "", "Invalid numeric literal '" + this.source.substring(this.start, this.current) + "'");
             return;
         }
         while (this.isDigit(this.peek())) this.advance();
@@ -253,7 +253,7 @@ export class Lexer {
         if (this.isAtEnd()) return false;
         if (this.source.charAt(this.current) != expected) return false;
         this.current++;
-        this.col++;
+        this.endCol++;
         return true;
     }
 
@@ -290,19 +290,23 @@ export class Lexer {
 
     private advance(n = 1): string {
         this.current += n;
-        this.col += n;
+        this.endCol += n;
         return this.source.charAt(this.current - n);
     }
 
     private nextline(): void {
         this.line++;
-        this.col = 1;
+        this.endCol = 1;
+    }
+
+    private getStartCol(): number {
+        // Position of start of token on this line
+        return this.endCol - (this.current - this.start);
     }
 
     private addToken(type: TokenType, literal?: Literal): void {
         // Trim the end of whitespace for identifiers. No other token should have whitespace.
         const text = this.source.substring(this.start, this.current).trimEnd();
-        const col = this.col - (this.current - this.start);
-        this.tokens.push(new Token(type, text, literal, this.line, col));
+        this.tokens.push(new Token(type, text, literal, this.line, this.getStartCol()));
     }
 }
