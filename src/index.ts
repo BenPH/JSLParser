@@ -5,20 +5,20 @@ import { Parser } from './Parser';
 import AstPrinter from '../tool/ASTPrinter';
 
 let hadError = false;
-export function error(line: number, message: string) {
-    report(line, "", message);
+export function error(line: number, col: number, message: string) {
+    report(line, col, "", message);
 }
 // Parsing error
 export function printParseError(token: Token, message: string) {
     if (token.type == TokenType.EOF) {
-        report(token.line, " at end", message);
+        report(token.line, token.col, " at end", message);
     } else {
-        report(token.line, " at '" + token.lexeme + "'", message);
+        report(token.line, token.col, " at '" + token.lexeme + "'", message);
     }
 }
-export function report(line: number, where: string, message: string) {
+export function report(line: number, col: number, where: string, message: string) {
     hadError = true;
-    console.log(`[line ${line}] Error${where}: ${message}`)
+    console.log(`[line ${line}, col ${col}] Error${where}: ${message}`)
 }
 
 function runPrompt() {

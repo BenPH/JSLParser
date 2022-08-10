@@ -7,6 +7,7 @@ export class Lexer {
     private start = 0;
     private current = 0;
     private line = 1;
+    private col = 1;
 
     constructor(source: string) {
         this.source = source;
@@ -19,7 +20,7 @@ export class Lexer {
           this.scanToken();
         }
 
-        this.tokens.push(new Token(TokenType.EOF, "", undefined, this.line));
+        this.tokens.push(new Token(TokenType.EOF, "", undefined, this.line, this.col));
         return this.tokens;
     }
 
@@ -125,7 +126,7 @@ export class Lexer {
                 // Ignore whitespace.
                 break;
             case '\n':
-                this.line++;
+                this.nextline();
                 break;
             case '.': this.decimal(); break; // TODO: Require at least one digit after . before E
             default:
@@ -134,7 +135,7 @@ export class Lexer {
                 } else if (this.isNameStart(c)){
                     this.name();
                 } else {
-                    report(this.line, "", "Unexpected character '" + c + "'");
+                    report(this.line, this.col, "", "Unexpected character '" + c + "'");
                 }
                 break;
         }
@@ -148,12 +149,13 @@ export class Lexer {
                 this.advance(2);
                 this._rawString();
           }
-          if (this.peek() == '\n') this.line++;
+          if (this.peek() == '\n')
+            this.nextline();
           this.advance();
         }
 
         if (this.isAtEnd()) {
-          report(this.line, "", "Unterminated string.");
+          report(this.line, this.col, "", "Unterminated string.");
           return;
         }
 
@@ -173,7 +175,8 @@ export class Lexer {
 
     private _rawString(): void {
         while (!(this.peek() == ']' && this.lookahead(1) == '\\') && !this.isAtEnd()) {
-            if (this.peek() == '\n') this.line++;
+            if (this.peek() == '\n')
+                this.nextline();
             this.advance();
         }
         if (!this.isAtEnd()) this.advance();
@@ -209,7 +212,7 @@ export class Lexer {
         if((this.peek() == '+' || this.peek() == '-'))
             this.advance();
         if(!this.isDigit(this.peek())) {
-            report(this.line, "", "Invalid numeric literal '" + this.source.substring(this.start, this.current) + "'");
+            report(this.line, this.col, "", "Invalid numeric literal '" + this.source.substring(this.start, this.current) + "'");
             return;
         }
         while (this.isDigit(this.peek())) this.advance();
@@ -238,7 +241,8 @@ export class Lexer {
                 this.advance(2);
                 this.blockComment();
             } else {
-                if (this.peek() == '\n') this.line++;
+                if (this.peek() == '\n')
+                    this.nextline();
                 this.advance();
             }
         }
@@ -249,6 +253,7 @@ export class Lexer {
         if (this.isAtEnd()) return false;
         if (this.source.charAt(this.current) != expected) return false;
         this.current++;
+        this.col++;
         return true;
     }
 
@@ -269,7 +274,7 @@ export class Lexer {
 
     private isNameContinue(c: string): boolean {
         if (c == '\n') {
-            this.line++;
+            this.nextline();
             return true
         }
         return /[A-Za-z0-9_'#$%.?\s]/.test(c);
@@ -284,13 +289,20 @@ export class Lexer {
     }
 
     private advance(n = 1): string {
-        this.current += n
+        this.current += n;
+        this.col += n;
         return this.source.charAt(this.current - n);
+    }
+
+    private nextline(): void {
+        this.line++;
+        this.col = 1;
     }
 
     private addToken(type: TokenType, literal?: Literal): void {
         // Trim the end of whitespace for identifiers. No other token should have whitespace.
         const text = this.source.substring(this.start, this.current).trimEnd();
-        this.tokens.push(new Token(type, text, literal, this.line));
+        const col = this.col - (this.current - this.start);
+        this.tokens.push(new Token(type, text, literal, this.line, col));
     }
 }
