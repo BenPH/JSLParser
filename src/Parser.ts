@@ -37,7 +37,10 @@ export class Parser {
     
     parse() {
         try {
-            return this.expression();
+            const expr = this.expression();
+            if (!this.isAtEnd())
+                throw this.error(this.peek(), "Unexpected token.");
+            return expr
         } catch (e) {
             return null;
         }
