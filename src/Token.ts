@@ -39,18 +39,17 @@ export class Token {
     readonly type: TokenType;
     readonly lexeme: string;
     readonly literal: Literal;
-    readonly line: number;
-    readonly col: number;
+    readonly startPosition: {line: number, col: number};
 
-    constructor(type: TokenType, lexeme: string, literal: Literal, line: number, col: number) {
+    constructor(type: TokenType, lexeme: string, literal: Literal, startPosition: {line: number, col: number}) {
         this.type = type;
         this.lexeme = lexeme;
         this.literal = literal;
-        this.line = line;
-        this.col = col;
+        this.startPosition = startPosition;
     }
 
     public toString() {
-        return "type: " + TokenType[this.type] + ", lexeme: " + this.lexeme + ", value: " + this.literal + " @line: " + this.line + " @col: " + this.col;
+        return "type: " + TokenType[this.type] + ", lexeme: " + this.lexeme +  ", value: " + this.literal
+                 + " @line: " +this.startPosition.line + " @col: " + this.startPosition.col;
     }
 }

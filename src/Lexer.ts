@@ -7,7 +7,8 @@ export class Lexer {
     private start = 0;
     private current = 0;
     private line = 1;
-    private endCol = 1;
+    private col = 1;
+    private tokenStart = {line: this.line, col: this.col}
 
     constructor(source: string) {
         this.source = source;
@@ -17,10 +18,14 @@ export class Lexer {
         while (!this.isAtEnd()) {
           // We are at the beginning of the next lexeme.
           this.start = this.current;
+          // Track the start of this token's position
+          this.tokenStart = {line: this.line, col: this.col};
           this.scanToken();
         }
 
-        this.tokens.push(new Token(TokenType.EOF, "", undefined, this.line, this.endCol));
+        this.tokens.push(
+            new Token(TokenType.EOF, "", undefined, this.tokenStart)
+        );
         return this.tokens;
     }
 
@@ -135,7 +140,7 @@ export class Lexer {
                 } else if (this.isNameStart(c)){
                     this.name();
                 } else {
-                    report(this.line, this.getStartCol(), "", "Unexpected character '" + c + "'");
+                    report(this.tokenStart, "", "Unexpected character '" + c + "'");
                 }
                 break;
         }
@@ -155,7 +160,7 @@ export class Lexer {
         }
 
         if (this.isAtEnd()) {
-          report(this.line, this.getStartCol(), "", "Unterminated string.");
+          report(this.tokenStart, "", "Unterminated string.");
           return;
         }
 
@@ -212,7 +217,7 @@ export class Lexer {
         if((this.peek() == '+' || this.peek() == '-'))
             this.advance();
         if(!this.isDigit(this.peek())) {
-            report(this.line, this.getStartCol(), "", "Invalid numeric literal '" + this.source.substring(this.start, this.current) + "'");
+            report(this.tokenStart, "", "Invalid numeric literal '" + this.source.substring(this.start, this.current) + "'");
             return;
         }
         while (this.isDigit(this.peek())) this.advance();
@@ -253,7 +258,7 @@ export class Lexer {
         if (this.isAtEnd()) return false;
         if (this.source.charAt(this.current) != expected) return false;
         this.current++;
-        this.endCol++;
+        this.col++;
         return true;
     }
 
@@ -290,23 +295,18 @@ export class Lexer {
 
     private advance(n = 1): string {
         this.current += n;
-        this.endCol += n;
+        this.col += n;
         return this.source.charAt(this.current - n);
     }
 
     private nextline(): void {
         this.line++;
-        this.endCol = 1;
-    }
-
-    private getStartCol(): number {
-        // Position of start of token on this line
-        return this.endCol - (this.current - this.start);
+        this.col = 1;
     }
 
     private addToken(type: TokenType, literal?: Literal): void {
         // Trim the end of whitespace for identifiers. No other token should have whitespace.
         const text = this.source.substring(this.start, this.current).trimEnd();
-        this.tokens.push(new Token(type, text, literal, this.line, this.getStartCol()));
+        this.tokens.push(new Token(type, text, literal, this.tokenStart));
     }
 }
