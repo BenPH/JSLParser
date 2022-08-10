@@ -24,7 +24,7 @@ export class Lexer {
         }
 
         this.tokens.push(
-            new Token(TokenType.EOF, "", undefined, this.tokenStart)
+            new Token(TokenType.EOF, "", undefined, {line: this.line, col: this.col})
         );
         return this.tokens;
     }
