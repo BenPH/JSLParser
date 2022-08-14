@@ -334,7 +334,7 @@ export class Parser {
             if (!rowLength) {
                 rowLength = row.length;
             } else if (row.length != rowLength) {
-                throw this.error(this.peek(), "Inconsistent lengths of rows in matrix.");
+                this.error(this.peek(), "Inconsistent lengths of rows in matrix.");
             }
             contents.push(row);
 
