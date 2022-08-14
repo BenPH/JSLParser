@@ -223,7 +223,7 @@ export class Parser {
             const operator = this.previous();
             const right = this.primary();
             if (expr instanceof LiteralNumeric || right instanceof LiteralNumeric) {
-                throw this.error(operator, "The ':' operator does not accept numeric values")
+                throw this.error(operator, "The ':' operator does not accept numeric values.")
             }
             expr = new Binary(expr, operator, right);
         }
@@ -310,7 +310,7 @@ export class Parser {
             while(this.check(TokenType.COMMA)) this.advance(); // allow multiple commas inbetween
         }
         if(this.previous().type == TokenType.COMMA)
-            throw this.error(this.previous(), "Unexpected ',' at end of list."); // TODO: Maybe don't need to `throw` here. Automatic resync?
+            this.error(this.previous(), "Unexpected ',' at end of list.");
         this.consume(TokenType.CLOSE_BRACE, "Expected a '}'.");
         return contents;
     }
@@ -331,12 +331,6 @@ export class Parser {
                 row.push(this.numericLiteral());
             }
 
-            if (this.previous().type == TokenType.SEMICOLON) {
-                throw this.error(this.peek(), "Duplicate ';' in matrix."); // TODO: Maybe don't need to `throw` here. Automatic resync?
-            } else if (this.previous().type == TokenType.COMMA) {
-                throw this.error(this.peek(), "Duplicate ',' in matrix."); // TODO: Maybe don't need to `throw` here. Automatic resync?
-            }
-
             if (!rowLength) {
                 rowLength = row.length;
             } else if (row.length != rowLength) {
@@ -346,12 +340,17 @@ export class Parser {
 
             if (this.check(TokenType.SEMICOLON) || this.check(TokenType.COMMA)) {
                 this.advance(); // Advance past the ; or ,
+                if (this.match(TokenType.SEMICOLON)) {
+                    this.error(this.peek(), "Extra ';' in matrix.");
+                } else if (this.match(TokenType.COMMA)) {
+                    this.error(this.peek(), "Extra ',' in matrix.");
+                }
             }
         }
         if (this.previous().type == TokenType.SEMICOLON) {
-            throw this.error(this.previous(), "Unexpected ';' at end of matrix."); // Do not throw
+            this.error(this.previous(), "Unexpected ';' at end of matrix.");
         } else if (this.previous().type == TokenType.COMMA) {
-            throw this.error(this.previous(), "Unexpected ',' at end of matrix."); // Do not throw
+            this.error(this.previous(), "Unexpected ',' at end of matrix.");
         }
         this.consume(TokenType.CLOSE_BRACKET, "Expected a ']'.");
 
@@ -373,7 +372,7 @@ export class Parser {
                 this.consume(TokenType.COMMA, "expected a ',' or ']'.");
         }
         if(this.previous().type == TokenType.COMMA)
-            throw this.error(this.previous(), "Unexpected ',' at end of associative array."); // TODO: Maybe don't need to `throw` here. Automatic resync?
+            this.error(this.previous(), "Unexpected ',' at end of associative array literal.");
         this.consume(TokenType.CLOSE_BRACKET, "expected a ']'.");
         return contents;
     }
