@@ -65,7 +65,7 @@ export class Parser {
                 break;
             expressions.push(this.assignment());
         } while (this.match(TokenType.SEMICOLON))
-        // TODO: Allow trailing semicolon. why is this so hard?
+
         if (expressions.length > 1) {
             return new Glue(expressions);
         } else {
@@ -282,7 +282,7 @@ export class Parser {
         
         const paren = this.consume(TokenType.CLOSE_PAREN, 
             "Expected a ')' after arguments of call starting at line " + callStart.line + ", col " + callStart.col);
-        return new Call(callee, paren, args);
+        return new Call(callee, args);
     }
 
     private finishIndex(expr: Expr): Expr {

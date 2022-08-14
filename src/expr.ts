@@ -59,7 +59,7 @@ export class Binary implements Expr {
 export class Call implements Expr {
     constructor(
         readonly callee: Expr,
-        readonly paren: Token, // Store the closing parenthesis for better errors?
+        // readonly paren: Token, // Store the closing parenthesis for better errors?
         readonly args: Expr[]
     ) {}
 

@@ -172,7 +172,6 @@ export class Lexer {
             // The closing ".
             this.advance();
 
-            // TODO: Replace escaped characters
             const value = this.source.substring(this.start, this.current);
             this.addToken(TokenType.STRING, value);
         }
