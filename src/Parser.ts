@@ -447,26 +447,6 @@ export class Parser {
         return this.parseError;
     }
     
-    private synchronize(): void {
-        this.advance();
-        
-        while (!this.isAtEnd()) {
-            if (this.previous().type == TokenType.SEMICOLON) return;
-            //   switch (peek().type) {
-            //     case CLASS:
-            //     case FUN:
-            //     case VAR:
-            //     case FOR:
-            //     case IF:
-            //     case WHILE:
-            //     case PRINT:
-            //     case RETURN:
-            //       return;
-            //   }
-            this.advance();
-        }
-    }
-    
     private check(type: TokenType): boolean {
         if (this.isAtEnd()) return false;
         return this.peek().type == type;
