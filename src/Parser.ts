@@ -37,10 +37,15 @@ export class Parser {
     
     parse() {
         try {
-            const expr = this.expression();
-            if (!this.isAtEnd())
-                throw this.error(this.peek(), "Unexpected token.");
-            return expr
+            const toplevel: Expr[] = [];
+            toplevel.push(this.expression());
+            while (!this.isAtEnd()) {
+                this.error(this.peek(), "Unexpected token. Maybe you are missing a ';'.");
+                toplevel.push(this.expression());
+            }
+            // Recovery heuristic - Glue together partially parsed top level expressions
+            // If there were no syntax errors, there should only be one expression in the list
+            return new Glue(toplevel);
         } catch (e) {
             return null;
         }
