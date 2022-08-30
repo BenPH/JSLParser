@@ -45,7 +45,7 @@ export class Parser {
             }
             // Recovery heuristic - Glue together partially parsed top level expressions
             // If there were no syntax errors, there should only be one expression in the list
-            return new Glue(toplevel);
+            return toplevel.length == 1 ? toplevel[0] : new Glue(toplevel);
         } catch (e) {
             return null;
         }
