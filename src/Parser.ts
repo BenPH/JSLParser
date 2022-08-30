@@ -272,16 +272,27 @@ export class Parser {
         const args: Expr[] = [];
         const callStart = this.previous().startPosition;
         while(this.match(TokenType.COMMA)) continue; // allow multiple commas at start
-        if (!this.check(TokenType.CLOSE_PAREN)) {
-            do {
-                while(this.match(TokenType.COMMA)) continue; // allow multiple commas inbetween
-                if(!this.check(TokenType.CLOSE_PAREN))
-                    args.push(this.expression());
-            } while (this.match(TokenType.COMMA));
-        }
         
-        const paren = this.consume(TokenType.CLOSE_PAREN, 
-            "Expected a ')' after arguments of call starting at line " + callStart.line + ", col " + callStart.col);
+        let callComplete = false;
+        while (!this.isAtEnd() && !callComplete) { // Loop for continuous error recovery of function arguments
+            if (!this.check(TokenType.CLOSE_PAREN)) {
+                do {
+                    while(this.match(TokenType.COMMA)) continue; // allow multiple commas inbetween
+                    if(!this.check(TokenType.CLOSE_PAREN))
+                        args.push(this.expression());
+                } while (this.match(TokenType.COMMA));
+            }
+
+            if (!this.match(TokenType.CLOSE_PAREN)) {
+                // Error recovery heuristic - assume missing ; or , and keep reading expressions as arugments
+                this.error(this.peek(),
+                    "Failed to parse arguments of call starting at line " +
+                    callStart.line + ", col " + callStart.col +
+                    ". Maybe you are missing a ';' or ','.");
+            } else {
+                callComplete = true
+            }
+        }
         return new Call(callee, args);
     }
 
